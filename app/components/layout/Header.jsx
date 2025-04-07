@@ -1,0 +1,221 @@
+// components/layout/Header.js
+"use client";
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Menu, X, Home, Briefcase, Users, MessageSquare, ChevronDown } from 'lucide-react';
+
+const Header = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+
+  // Efecto para detectar el scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const toggleDropdown = (id) => {
+    if (activeDropdown === id) {
+      setActiveDropdown(null);
+    } else {
+      setActiveDropdown(id);
+    }
+  };
+
+  return (
+    <header className={` fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-md py-1' : 'bg-transparent py-1'}`}>
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center">
+          {/* Logo */}
+          <Link href="/" className="flex items-center group">
+            <div className="relative mr-2">
+              <div className="absolute inset-0 bg-primary rounded-full transform rotate-45 transition-transform group-hover:rotate-90"></div>
+              <div className="absolute inset-0 bg-secondary rounded-full transform -rotate-45 scale-75 transition-transform group-hover:-rotate-90"></div>
+{/*               <span className="relative z-10 text-3xl font-montserrat font-bold text-white flex items-center justify-center w-10 h-10">
+                S
+              </span> */}
+            </div>
+            <div className=''>
+              <span className="text-5xl font-montserrat font-bold ">
+                <span className={`${scrolled ? 'text-primary' : 'text-white'}`}>Sin</span>
+                <span className={`${scrolled ? 'text-secondary' : 'text-white'}`}>corp</span>
+              </span>
+              <span className={`block text-xs ${scrolled ? 'text-gray-600' : 'text-gray-300'} font-montserrat`}>SERVICIOS INTEGRALES</span>
+            </div>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-1">
+            <Link 
+              href="/" 
+              className={`group relative px-3 py-2 rounded-md transition-all duration-200 ${scrolled ? 'text-gray-700 hover:text-primary' : 'text-white hover:text-white'}`}
+            >
+              <span className="flex items-center">
+                <Home size={16} className="mr-1 transition-transform group-hover:scale-110" />
+                <span>Inicio</span>
+              </span>
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+            </Link>
+            
+            <div className="relative group">
+              <button 
+                onClick={() => toggleDropdown('servicios')}
+                className={`group relative px-3 py-2 rounded-md transition-all duration-200 flex items-center ${scrolled ? 'text-gray-700 hover:text-primary' : 'text-white hover:text-white'}`}
+              >
+                <Briefcase size={16} className="mr-1 transition-transform group-hover:scale-110" />
+                <span>Servicios</span>
+                <ChevronDown size={14} className={`ml-1 transition-transform duration-300 ${activeDropdown === 'servicios' ? 'rotate-180' : ''}`} />
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </button>
+              
+              {/* Dropdown */}
+              <div className={`absolute top-full left-0 w-56 mt-1 bg-white shadow-lg rounded-md overflow-hidden transition-all duration-300 ${activeDropdown === 'servicios' ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
+                <Link href="/servicios/automatismo" className="block px-4 py-2 text-gray-700 hover:bg-primary hover:text-white transition-colors">
+                  Automatismo
+                </Link>
+                <Link href="/servicios/electricidad" className="block px-4 py-2 text-gray-700 hover:bg-primary hover:text-white transition-colors">
+                  Electricidad
+                </Link>
+                <Link href="/servicios/climatizacion" className="block px-4 py-2 text-gray-700 hover:bg-primary hover:text-white transition-colors">
+                  Climatización
+                </Link>
+                <Link href="/servicios/seguridad" className="block px-4 py-2 text-gray-700 hover:bg-primary hover:text-white transition-colors">
+                  Seguridad
+                </Link>
+                <Link href="/servicios" className="block px-4 py-2 text-primary font-medium hover:bg-primary hover:text-white transition-colors">
+                  Ver todos
+                </Link>
+              </div>
+            </div>
+            
+            <Link 
+              href="/nosotros" 
+              className={`group relative px-3 py-2 rounded-md transition-all duration-200 ${scrolled ? 'text-gray-700 hover:text-primary' : 'text-white hover:text-white'}`}
+            >
+              <span className="flex items-center">
+                <Users size={16} className="mr-1 transition-transform group-hover:scale-110" />
+                <span>Nosotros</span>
+              </span>
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+            </Link>
+            
+            <Link 
+              href="/contacto" 
+              className={`bg-primary hover:bg-primary-light text-white px-4 py-2 rounded-md transition-colors flex items-center ml-2 ${scrolled ? 'shadow-md' : ''}`}
+            >
+              <MessageSquare size={16} className="mr-1" />
+              <span>Contacto</span>
+            </Link>
+          </nav>
+
+          {/* Mobile menu button */}
+          <button 
+            className={`md:hidden p-2 rounded-md ${scrolled ? 'text-gray-700 hover:bg-gray-100' : 'text-white hover:bg-white/10'}`}
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isMenuOpen && (
+          <nav className="md:hidden mt-4 py-3 bg-white shadow-lg rounded-lg max-h-[70vh] overflow-y-auto">
+            <Link 
+              href="/" 
+              className="flex items-center px-4 py-3 text-gray-700 hover:bg-primary hover:text-white rounded-md transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <Home size={18} className="mr-2" />
+              <span>Inicio</span>
+            </Link>
+            
+            <div className="px-4 py-3">
+              <button 
+                onClick={() => toggleDropdown('mobileServicios')}
+                className="flex items-center w-full text-left text-gray-700 hover:text-primary"
+              >
+                <Briefcase size={18} className="mr-2" />
+                <span>Servicios</span>
+                <ChevronDown size={16} className={`ml-auto transition-transform duration-300 ${activeDropdown === 'mobileServicios' ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {activeDropdown === 'mobileServicios' && (
+                <div className="mt-2 ml-6 border-l-2 border-primary pl-4 space-y-2">
+                  <Link 
+                    href="/servicios/automatismo" 
+                    className="block py-2 text-gray-700 hover:text-primary"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Automatismo
+                  </Link>
+                  <Link 
+                    href="/servicios/electricidad" 
+                    className="block py-2 text-gray-700 hover:text-primary"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Electricidad
+                  </Link>
+                  <Link 
+                    href="/servicios/climatizacion" 
+                    className="block py-2 text-gray-700 hover:text-primary"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Climatización
+                  </Link>
+                  <Link 
+                    href="/servicios/seguridad" 
+                    className="block py-2 text-gray-700 hover:text-primary"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Seguridad
+                  </Link>
+                  <Link 
+                    href="/servicios" 
+                    className="block py-2 text-primary font-medium"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Ver todos los servicios
+                  </Link>
+                </div>
+              )}
+            </div>
+            
+            <Link 
+              href="/nosotros" 
+              className="flex items-center px-4 py-3 text-gray-700 hover:bg-primary hover:text-white rounded-md transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <Users size={18} className="mr-2" />
+              <span>Nosotros</span>
+            </Link>
+            
+            <Link 
+              href="/contacto" 
+              className="flex items-center mx-4 mt-2 px-4 py-3 bg-primary text-white rounded-md hover:bg-primary-light transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <MessageSquare size={18} className="mr-2" />
+              <span>Contacto</span>
+            </Link>
+          </nav>
+        )}
+      </div>
+      
+      {/* Barra de progreso en la parte superior */}
+      <div className={`h-0.5 bg-gradient-to-r from-primary via-secondary to-info transform transition-transform duration-500 ${scrolled ? 'scale-x-100' : 'scale-x-0'}`}></div>
+      <hr className='border-t border-white'/>
+    </header>
+  );
+};
+
+export default Header;
