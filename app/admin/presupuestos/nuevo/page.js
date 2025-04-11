@@ -149,7 +149,7 @@ export default function NuevoPresupuesto() {
                 estado: 'Pendiente',
                 usuarioCreador: user.email
             };
-
+            
             // Guardar en Firestore
             await crearPresupuesto(presupuestoData);
             alert('Presupuesto guardado exitosamente');

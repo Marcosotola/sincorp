@@ -81,6 +81,9 @@ const Footer = () => {
 
         <div className="pt-6 mt-8 text-center border-t border-blue-800">
           <p>&copy; {new Date().getFullYear()} SINCORP. Todos los derechos reservados.</p>
+          <Link 
+          href='/admin'
+          className='px-6 py-6 font-bold '>De: Martin Sotola</Link>
         </div>
       </div>
     </footer>

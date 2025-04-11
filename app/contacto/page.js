@@ -147,8 +147,7 @@ export default function Contacto() {
                 <Phone className="mt-1 mr-4 text-primary" />
                 <div>
                   <h3 className="font-medium">Teléfono</h3>
-                  <p className="text-gray-600">(011) 1234-5678</p>
-                  <p className="text-gray-600">+54 9 11 1234-5678 (WhatsApp)</p>
+                  <p className="text-gray-600">(351) 681 0777</p>
                 </div>
               </div>
 
@@ -156,8 +155,7 @@ export default function Contacto() {
                 <Mail className="mt-1 mr-4 text-primary" />
                 <div>
                   <h3 className="font-medium">Correo electrónico</h3>
-                  <p className="text-gray-600">info@sincorp.com.ar</p>
-                  <p className="text-gray-600">soporte@sincorp.com.ar</p>
+                  <p className="text-gray-600">sincorpserviciosintegrales@gmail.com</p>
                 </div>
               </div>
 
@@ -165,8 +163,8 @@ export default function Contacto() {
                 <MapPin className="mt-1 mr-4 text-primary" />
                 <div>
                   <h3 className="font-medium">Dirección</h3>
-                  <p className="text-gray-600">Av. Rivadavia 1234</p>
-                  <p className="text-gray-600">Buenos Aires, Argentina</p>
+                  <p className="text-gray-600">Av. Luciano Torrent 4800</p>
+                  <p className="text-gray-600">5000 Córdoba, Argentina</p>
                 </div>
               </div>
             </div>

@@ -19,27 +19,27 @@ export default function HistorialPresupuestos() {
   const router = useRouter();
 
 
-    // Estado del formulario
-    const [cliente, setCliente] = useState({
-        nombre: '',
-        empresa: '',
-        email: '',
-        telefono: '',
-        direccion: ''
-    });
+  // Estado del formulario
+  const [cliente, setCliente] = useState({
+    nombre: '',
+    empresa: '',
+    email: '',
+    telefono: '',
+    direccion: ''
+  });
 
-    const [presupuesto, setPresupuesto] = useState({
-        numero: `P-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
-        fecha: new Date().toISOString().split('T')[0],
-        validez: '30 días',
-        items: [
-            { id: 1, descripcion: '', cantidad: '', precioUnitario: '', subtotal: 0 }
-        ],
-        notas: 'Este presupuesto tiene una validez de 30 días a partir de la fecha de emisión.',
-        subtotal: 0,
-        total: 0
-    });
-  
+  const [presupuesto, setPresupuesto] = useState({
+    numero: `P-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
+    fecha: new Date().toISOString().split('T')[0],
+    validez: '30 días',
+    items: [
+      { id: 1, descripcion: '', cantidad: '', precioUnitario: '', subtotal: 0 }
+    ],
+    notas: 'Este presupuesto tiene una validez de 30 días a partir de la fecha de emisión.',
+    subtotal: 0,
+    total: 0
+  });
+
   useEffect(() => {
     // Verificar autenticación con Firebase
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -61,12 +61,12 @@ export default function HistorialPresupuestos() {
       const presupuestosRef = collection(db, 'presupuestos');
       const q = query(presupuestosRef, orderBy('fechaCreacion', 'desc'));
       const querySnapshot = await getDocs(q);
-      
+
       const presupuestosData = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
-      
+
       console.log("Presupuestos cargados:", presupuestosData.length);
       setPresupuestos(presupuestosData);
     } catch (error) {
@@ -90,7 +90,7 @@ export default function HistorialPresupuestos() {
       try {
         // Eliminar el documento de Firestore
         await deleteDoc(doc(db, 'presupuestos', id));
-        
+
         // Actualizar el estado local
         setPresupuestos(presupuestos.filter(p => p.id !== id));
       } catch (error) {
@@ -102,7 +102,7 @@ export default function HistorialPresupuestos() {
 
   const presupuestosFiltrados = presupuestos.filter((presupuesto) => {
     if (!filtro) return true;
-    
+
     const terminoBusqueda = filtro.toLowerCase();
     return (
       presupuesto.numero?.toLowerCase().includes(terminoBusqueda) ||
@@ -137,7 +137,7 @@ export default function HistorialPresupuestos() {
           </div>
           <div className="flex items-center space-x-4">
             <span className="hidden md:inline">{user?.email}</span>
-            <button 
+            <button
               onClick={handleLogout}
               className="flex items-center p-2 text-white rounded-md hover:bg-primary-light"
             >
@@ -150,7 +150,7 @@ export default function HistorialPresupuestos() {
       <div className="container px-4 py-8 mx-auto">
         <div className="flex flex-wrap items-center justify-between mb-8">
           <div className="flex items-center mb-4">
-            <Link 
+            <Link
               href="/admin/dashboard"
               className="flex items-center mr-4 text-primary hover:underline"
             >
@@ -159,7 +159,7 @@ export default function HistorialPresupuestos() {
             <span className="mx-2 text-gray-500">/</span>
             <span className="text-gray-700">Historial de Presupuestos</span>
           </div>
-          
+
           <Link
             href="/admin/presupuestos/nuevo"
             className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
@@ -217,9 +217,9 @@ export default function HistorialPresupuestos() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500">
-                          {presupuesto.fechaCreacion 
-                            ? new Date(presupuesto.fechaCreacion.toDate()).toLocaleDateString() 
-                            : presupuesto.fecha 
+                          {presupuesto.fechaCreacion
+                            ? new Date(presupuesto.fechaCreacion.toDate()).toLocaleDateString()
+                            : presupuesto.fecha
                               ? new Date(presupuesto.fecha).toLocaleDateString()
                               : 'No disponible'
                           }
@@ -234,25 +234,25 @@ export default function HistorialPresupuestos() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                          ${presupuesto.estado === 'Aprobado' ? 'bg-green-100 text-green-800' : 
-                          presupuesto.estado === 'Rechazado' ? 'bg-red-100 text-red-800' : 
-                          'bg-yellow-100 text-yellow-800'}`}>
+                          ${presupuesto.estado === 'Aprobado' ? 'bg-green-100 text-green-800' :
+                            presupuesto.estado === 'Rechazado' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'}`}>
                           {presupuesto.estado || 'Pendiente'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                         <div className="flex justify-end space-x-4">
-                          
-                          <Link 
+
+                          <Link
                             href={`/admin/presupuestos/${presupuesto.id}`}
                             title="Ver detalles"
                             className="text-gray-600 hover:text-primary"
                           >
                             <Eye size={18} />
                           </Link>
-                          
-                          
-{/*                           <button 
+
+
+                          {/*                           <button 
                             onClick={() => handleDescargarPDF(presupuesto)}
                             title="Descargar PDF"
                             className="text-primary hover:text-primary-light"
@@ -260,31 +260,29 @@ export default function HistorialPresupuestos() {
                             <Download size={18} />
                           </button> */}
 
-                        <button
+                          <button
+                            title="Descargar PDF"
                             className="text-primary hover:text-primary-light"
-                        >
+                          >
                             <PDFDownloadLink
-                                document={<PresupuestoPDF presupuesto={{ ...presupuesto, cliente }} />}
-                                fileName={`${presupuesto.numero}.pdf`}
-                                className={` ${!presupuesto.items[0].descripcion ? '' : ''}`}
-                                disabled={!presupuesto.items[0].descripcion}
+                              document={<PresupuestoPDF presupuesto={presupuesto} />}
+                              fileName={`${presupuesto.numero}.pdf`}
+                              className="text-primary hover:text-primary-light"
                             >
-                                {({ blob, url, loading, error }) =>
-                                    loading ?
-                                        <span> Generando PDF...</span> :
-                                        <span><Download size={18} /> </span>
-                                }
+                              {({ blob, url, loading, error }) =>
+                                <Download size={18} className={loading ? "animate-pulse" : ""} />
+                              }
                             </PDFDownloadLink>
-                        </button>
-                          
-                          <Link 
+                          </button>
+
+                          <Link
                             href={`/admin/presupuestos/editar/${presupuesto.id}`}
                             title="Editar"
                             className="text-secondary hover:text-secondary-light"
                           >
                             <Edit size={18} />
                           </Link>
-                          <button 
+                          <button
                             onClick={() => handleDeletePresupuesto(presupuesto.id)}
                             title="Eliminar"
                             className="text-red-500 cursor-pointer hover:text-red-700"
@@ -305,7 +303,7 @@ export default function HistorialPresupuestos() {
               </tbody>
             </table>
           </div>
-          
+
           {presupuestosFiltrados.length === 0 && (
             <div className="py-10 text-center">
               <FileText size={48} className="mx-auto mb-4 text-gray-400" />
