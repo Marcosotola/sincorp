@@ -24,6 +24,14 @@ export default function VerPresupuesto({ params }) {
   const [descargandoPdf, setDescargandoPdf] = useState(false);
   const [cambiandoEstado, setCambiandoEstado] = useState(false);
 
+  // Función para formatear montos con punto como separador de miles y coma para decimales
+  const formatearMonto = (valor) => {
+    return new Intl.NumberFormat('es-ES', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(valor);
+  };
+
   useEffect(() => {
     if (!id) return;
 
@@ -319,8 +327,8 @@ export default function VerPresupuesto({ params }) {
                   <tr key={item.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                     <td className="px-4 py-2 text-sm text-gray-700">{item.descripcion}</td>
                     <td className="px-4 py-2 text-sm text-gray-700">{item.cantidad}</td>
-                    <td className="px-4 py-2 text-sm text-gray-700">$${parseFloat(item.precioUnitario || 0).toFixed(2)}</td>
-                    <td className="px-4 py-2 text-sm font-medium text-gray-900">${item.subtotal.toFixed(2)}</td>
+                    <td className="px-4 py-2 text-sm text-gray-700">${formatearMonto(parseFloat(item.precioUnitario || 0))}</td>
+                    <td className="px-4 py-2 text-sm font-medium text-gray-900">${formatearMonto(item.subtotal)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -330,13 +338,13 @@ export default function VerPresupuesto({ params }) {
           <div className="w-full mt-6 ml-auto md:w-64">
             <div className="flex justify-between py-2 border-t border-gray-200">
               <span className="text-gray-700">Subtotal:</span>
-              <span className="font-medium">${presupuesto.subtotal.toFixed(2)}</span>
+              <span className="font-medium">${formatearMonto(presupuesto.subtotal)}</span>
             </div>
             <div className="flex justify-between py-2 border-t border-gray-200">
             </div>
             <div className="flex justify-between py-2 text-lg font-bold border-t border-b border-gray-200">
               <span>Total:</span>
-              <span>${presupuesto.total.toFixed(2)}</span>
+              <span>${formatearMonto(presupuesto.total)}</span>
             </div>
           </div>
         </div>
