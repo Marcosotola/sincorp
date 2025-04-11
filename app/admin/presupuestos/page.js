@@ -242,6 +242,7 @@ export default function HistorialPresupuestos() {
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                         <div className="flex justify-end space-x-4">
+                          
                           <Link 
                             href={`/admin/presupuestos/${presupuesto.id}`}
                             title="Ver detalles"
@@ -249,6 +250,7 @@ export default function HistorialPresupuestos() {
                           >
                             <Eye size={18} />
                           </Link>
+                          
                           
 {/*                           <button 
                             onClick={() => handleDescargarPDF(presupuesto)}
@@ -269,8 +271,8 @@ export default function HistorialPresupuestos() {
                             >
                                 {({ blob, url, loading, error }) =>
                                     loading ?
-                                        <span><span className="inline-block w-4 h-4 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
-                                        <span><Download size={18} className="mr-2" /> </span>
+                                        <span> Generando PDF...</span> :
+                                        <span><Download size={18} /> </span>
                                 }
                             </PDFDownloadLink>
                         </button>
@@ -285,7 +287,7 @@ export default function HistorialPresupuestos() {
                           <button 
                             onClick={() => handleDeletePresupuesto(presupuesto.id)}
                             title="Eliminar"
-                            className="text-red-500 hover:text-red-700"
+                            className="text-red-500 cursor-pointer hover:text-red-700"
                           >
                             <Trash size={18} />
                           </button>

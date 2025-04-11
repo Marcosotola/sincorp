@@ -10,6 +10,23 @@ import { crearPresupuesto } from '../../../lib/firestore';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import PresupuestoPDF from '../../../components/pdf/PresupuestoPDF';
 
+// Función para formatear montos con separador de miles (punto) y decimal (coma)
+const formatMoney = (amount) => {
+  if (amount === undefined || amount === null) return '$0,00';
+  
+  // Convertir a número si es string
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  
+  // Formatear con 2 decimales y reemplazar punto por coma para decimales
+  const formatted = num.toFixed(2).replace('.', ',');
+  
+  // Agregar separadores de miles (puntos)
+  const parts = formatted.split(',');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  
+  return '$' + parts.join(',');
+};
+
 export default function NuevoPresupuesto() {
     const router = useRouter();
     const [user, setUser] = useState(null);
@@ -382,7 +399,7 @@ export default function NuevoPresupuesto() {
                                             </td>
 
                                             <td className="px-4 py-2 font-medium text-gray-700">
-                                                ${item.subtotal ? item.subtotal.toFixed(2) : '0.00'}
+                                                {formatMoney(item.subtotal)}
                                             </td>
                                             <td className="px-4 py-2">
                                                 <button
@@ -411,11 +428,11 @@ export default function NuevoPresupuesto() {
                         <div className="w-full mt-6 ml-auto md:w-64">
                             <div className="flex justify-between py-2 border-t border-gray-200">
                                 <span className="text-gray-700">Subtotal:</span>
-                                <span className="font-medium">${presupuesto.subtotal.toFixed(2)}</span>
+                                <span className="font-medium">{formatMoney(presupuesto.subtotal)}</span>
                             </div>
                             <div className="flex justify-between py-2 text-lg font-bold border-t border-b border-gray-200">
                                 <span>Total:</span>
-                                <span>${presupuesto.total.toFixed(2)}</span>
+                                <span>{formatMoney(presupuesto.total)}</span>
                             </div>
                         </div>
                     </div>

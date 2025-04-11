@@ -25,14 +25,22 @@ export default function Contacto() {
     setIsSubmitting(true);
     setSubmitMessage('');
     setSubmitError(false);
-
-    // Simulación de envío de formulario
+  
     try {
-      // Aquí iría la lógica real de envío (API, Firebase, etc)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      setSubmitMessage('¡Mensaje enviado correctamente! Nos pondremos en contacto pronto.');
-      setFormData({ nombre: '', email: '', telefono: '', mensaje: '' });
+      const response = await fetch('/api/contacto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+  
+      const result = await response.json();
+  
+      if (result.success) {
+        setSubmitMessage('¡Mensaje enviado correctamente! Nos pondremos en contacto pronto.');
+        setFormData({ nombre: '', email: '', telefono: '', mensaje: '' });
+      } else {
+        throw new Error(result.error || 'Error desconocido');
+      }
     } catch (error) {
       setSubmitError(true);
       setSubmitMessage('Ocurrió un error al enviar el mensaje. Por favor, intente nuevamente.');
@@ -40,22 +48,23 @@ export default function Contacto() {
       setIsSubmitting(false);
     }
   };
+  
 
   return (
     <div>
-      <div className="bg-primary text-white py-22">
-        <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-montserrat font-bold mb-4">Contacto</h1>
-          <p className="text-xl max-w-2xl">
+      <div className="text-white bg-primary py-22">
+        <div className="container px-4 mx-auto">
+          <h1 className="mb-4 text-3xl font-bold font-montserrat">Contacto</h1>
+          <p className="max-w-2xl text-xl">
             Estamos aquí para responder sus consultas y brindarle la mejor solución para sus necesidades técnicas.
           </p>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+      <div className="container px-4 py-16 mx-auto">
+        <div className="grid grid-cols-1 gap-16 md:grid-cols-2">
           <div>
-            <h2 className="text-2xl font-montserrat font-bold mb-6 text-primary">Envíenos un mensaje</h2>
+            <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">Envíenos un mensaje</h2>
 
             {submitMessage && (
               <div className={`p-4 mb-6 rounded-md ${submitError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
@@ -118,7 +127,7 @@ export default function Contacto() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-primary text-white px-6 py-3 rounded-md font-medium flex items-center justify-center hover:bg-primary-light transition-colors disabled:opacity-70"
+                className="flex items-center justify-center px-6 py-3 font-medium text-white transition-colors rounded-md bg-primary hover:bg-primary-light disabled:opacity-70"
               >
                 {isSubmitting ? 'Enviando...' : (
                   <>
@@ -131,11 +140,11 @@ export default function Contacto() {
           </div>
 
           <div>
-            <h2 className="text-2xl font-montserrat font-bold mb-6 text-primary">Información de contacto</h2>
+            <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">Información de contacto</h2>
 
             <div className="space-y-6">
               <div className="flex items-start">
-                <Phone className="text-primary mr-4 mt-1" />
+                <Phone className="mt-1 mr-4 text-primary" />
                 <div>
                   <h3 className="font-medium">Teléfono</h3>
                   <p className="text-gray-600">(011) 1234-5678</p>
@@ -144,7 +153,7 @@ export default function Contacto() {
               </div>
 
               <div className="flex items-start">
-                <Mail className="text-primary mr-4 mt-1" />
+                <Mail className="mt-1 mr-4 text-primary" />
                 <div>
                   <h3 className="font-medium">Correo electrónico</h3>
                   <p className="text-gray-600">info@sincorp.com.ar</p>
@@ -153,7 +162,7 @@ export default function Contacto() {
               </div>
 
               <div className="flex items-start">
-                <MapPin className="text-primary mr-4 mt-1" />
+                <MapPin className="mt-1 mr-4 text-primary" />
                 <div>
                   <h3 className="font-medium">Dirección</h3>
                   <p className="text-gray-600">Av. Rivadavia 1234</p>
@@ -162,10 +171,10 @@ export default function Contacto() {
               </div>
             </div>
 
-            <div className="flex item-start mt-8">
-              <Clock className="text-primary mr-4 mt-1" />
+            <div className="flex mt-8 item-start">
+              <Clock className="mt-1 mr-4 text-primary" />
               <div>
-                <h3 className="font-medium mb-3">Horario de atención</h3>
+                <h3 className="mb-3 font-medium">Horario de atención</h3>
                 <p className="text-gray-600">Lunes a Viernes: 8:00 - 18:00</p>
                 <p className="text-gray-600">Sábados: 9:00 - 13:00</p>
               </div>
