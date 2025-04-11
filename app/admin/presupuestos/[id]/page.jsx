@@ -9,12 +9,14 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
 import { obtenerPresupuestoPorId, actualizarPresupuesto } from '../../../lib/firestore';
 import { use } from 'react';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import PresupuestoPDF from '../../../components/pdf/PresupuestoPDF';
 
 export default function VerPresupuesto({ params }) {
   // Usar React.use para manejar params como una promesa
   const resolvedParams = use(params);
   const id = resolvedParams.id;
-  
+
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,12 +26,12 @@ export default function VerPresupuesto({ params }) {
 
   useEffect(() => {
     if (!id) return;
-    
+
     // Verificar autenticación y cargar presupuesto
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        
+
         try {
           // Cargar datos del presupuesto
           const presupuestoData = await obtenerPresupuestoPorId(id);
@@ -64,19 +66,19 @@ export default function VerPresupuesto({ params }) {
       // Importamos dinámicamente solo cuando se necesita
       const { pdf } = await import('@react-pdf/renderer');
       const PresupuestoPDF = (await import('../../../../components/pdf/PresupuestoPDF')).default;
-      
+
       // Crear el blob del PDF
       const blob = await pdf(<PresupuestoPDF presupuesto={presupuesto} />).toBlob();
-      
+
       // Crear URL del blob
       const url = URL.createObjectURL(blob);
-      
+
       // Descargar el PDF
       const link = document.createElement('a');
       link.href = url;
       link.download = `${presupuesto.numero}.pdf`;
       link.click();
-      
+
       // Limpiar el URL
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -90,21 +92,21 @@ export default function VerPresupuesto({ params }) {
   // Función para manejar el cambio de estado
   const handleCambiarEstado = async (nuevoEstado) => {
     if (presupuesto.estado === nuevoEstado) return;
-    
+
     if (confirm(`¿Está seguro de cambiar el estado a "${nuevoEstado}"?`)) {
       setCambiandoEstado(true);
       try {
-        await actualizarPresupuesto(id, { 
+        await actualizarPresupuesto(id, {
           estado: nuevoEstado,
           fechaActualizacionEstado: new Date()
         });
-        
+
         // Actualizar el estado local
         setPresupuesto({
           ...presupuesto,
           estado: nuevoEstado
         });
-        
+
         alert(`El presupuesto ha sido marcado como "${nuevoEstado}".`);
       } catch (error) {
         console.error('Error al cambiar el estado:', error);
@@ -141,7 +143,7 @@ export default function VerPresupuesto({ params }) {
           </div>
           <div className="flex items-center space-x-4">
             <span className="hidden md:inline">{user?.email}</span>
-            <button 
+            <button
               onClick={handleLogout}
               className="flex items-center p-2 text-white rounded-md hover:bg-primary-light"
             >
@@ -154,14 +156,14 @@ export default function VerPresupuesto({ params }) {
       <div className="container px-4 py-8 mx-auto">
         <div className="flex flex-wrap items-center justify-between mb-8">
           <div className="flex items-center mb-4">
-            <Link 
+            <Link
               href="/admin/dashboard"
               className="flex items-center mr-4 text-primary hover:underline"
             >
               <Home size={16} className="mr-1" /> Dashboard
             </Link>
             <span className="mx-2 text-gray-500">/</span>
-            <Link 
+            <Link
               href="/admin/presupuestos"
               className="flex items-center mr-4 text-primary hover:underline"
             >
@@ -170,29 +172,35 @@ export default function VerPresupuesto({ params }) {
             <span className="mx-2 text-gray-500">/</span>
             <span className="text-gray-700">Detalles del Presupuesto</span>
           </div>
-          
+
           <div className="flex mb-4 space-x-2">
-            <Link 
+            <Link
               href="/admin/presupuestos"
               className="flex items-center px-4 py-2 text-gray-700 transition-colors bg-gray-200 rounded-md hover:bg-gray-300"
             >
               <ArrowLeft size={18} className="mr-2" /> Volver
             </Link>
-            <Link 
+            <Link
               href={`/admin/presupuestos/editar/${id}`}
               className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
             >
               <Edit size={18} className="mr-2" /> Editar
             </Link>
             <button
-              onClick={handleDescargarPDF}
-              disabled={descargandoPdf}
-              className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-primary hover:bg-primary-light disabled:opacity-50"
+              title="Descargar PDF"
+              className="flex px-4 py-2 text-white rounded-md bg-primary hover:text-primary-light"
             >
-              {descargandoPdf ? 
-                <span><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando...</span> : 
-                <span><Download size={18} className="mr-2" /> Descargar PDF</span>
-              }
+              <PDFDownloadLink
+                document={<PresupuestoPDF presupuesto={presupuesto} />}
+                fileName={`${presupuesto.numero}.pdf`}
+                className="flex text-white"
+              >     
+                                {({ blob, url, loading, error }) =>
+                                    loading ?
+                                        <span><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
+                                        <span><Download size={18} className="mr-2" /> Descargar PDF</span>
+                                }
+              </PDFDownloadLink>
             </button>
           </div>
         </div>
@@ -223,14 +231,14 @@ export default function VerPresupuesto({ params }) {
                 <span className="font-medium text-gray-600">Estado:</span>
                 <div className="flex items-center col-span-2">
                   <span className={`px-2 py-1 rounded-full text-xs font-semibold inline-block mr-2
-                    ${presupuesto.estado === 'Aprobado' ? 'bg-green-100 text-green-800' : 
-                    presupuesto.estado === 'Rechazado' ? 'bg-red-100 text-red-800' : 
-                    'bg-yellow-100 text-yellow-800'}`}>
+                    ${presupuesto.estado === 'Aprobado' ? 'bg-green-100 text-green-800' :
+                      presupuesto.estado === 'Rechazado' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'}`}>
                     {presupuesto.estado}
                   </span>
-                  
+
                   {/* Botones para cambiar estado */}
-                  <div className="flex ml-2 space-x-1">
+                  <div className="flex ml-2 space-x-4">
                     <button
                       onClick={() => handleCambiarEstado('Aprobado')}
                       disabled={presupuesto.estado === 'Aprobado' || cambiandoEstado}
@@ -264,7 +272,7 @@ export default function VerPresupuesto({ params }) {
               </div>
             </div>
           </div>
-          
+
           {/* Información del cliente */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
@@ -292,7 +300,7 @@ export default function VerPresupuesto({ params }) {
             </div>
           </div>
         </div>
-        
+
         {/* Items del presupuesto */}
         <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
           <h3 className="mb-4 text-lg font-semibold text-gray-700">Detalle del Presupuesto</h3>
@@ -318,7 +326,7 @@ export default function VerPresupuesto({ params }) {
               </tbody>
             </table>
           </div>
-          
+
           <div className="w-full mt-6 ml-auto md:w-64">
             <div className="flex justify-between py-2 border-t border-gray-200">
               <span className="text-gray-700">Subtotal:</span>
@@ -332,7 +340,7 @@ export default function VerPresupuesto({ params }) {
             </div>
           </div>
         </div>
-        
+
         {/* Notas */}
         <div className="p-6 bg-white rounded-lg shadow-md">
           <h3 className="mb-4 text-lg font-semibold text-gray-700">Notas y Condiciones</h3>
