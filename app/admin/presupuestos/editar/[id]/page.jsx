@@ -39,7 +39,6 @@ export default function EditarPresupuesto({ params }) {
     ],
     notas: '',
     subtotal: 0,
-    iva: 0,
     total: 0
   });
 
@@ -64,7 +63,6 @@ export default function EditarPresupuesto({ params }) {
             items: presupuestoData.items || [],
             notas: presupuestoData.notas,
             subtotal: presupuestoData.subtotal,
-            iva: presupuestoData.iva,
             total: presupuestoData.total
           });
           
@@ -110,14 +108,12 @@ export default function EditarPresupuesto({ params }) {
     });
     
     const subtotal = updatedItems.reduce((sum, item) => sum + (item.subtotal || 0), 0);
-    const iva = subtotal * 0.21;
     
     setPresupuesto({
       ...presupuesto,
       items: updatedItems,
       subtotal: subtotal,
-      iva: iva,
-      total: subtotal + iva
+      total: subtotal
     });
   };
 
@@ -137,14 +133,12 @@ export default function EditarPresupuesto({ params }) {
     
     const updatedItems = presupuesto.items.filter(item => item.id !== id);
     const subtotal = updatedItems.reduce((sum, item) => sum + (item.subtotal || 0), 0);
-    const iva = subtotal * 0.21;
     
     setPresupuesto({
       ...presupuesto,
       items: updatedItems,
       subtotal: subtotal,
-      iva: iva,
-      total: subtotal + iva
+      total: subtotal
     });
   };
 
@@ -160,7 +154,6 @@ export default function EditarPresupuesto({ params }) {
         items: presupuesto.items,
         notas: presupuesto.notas,
         subtotal: presupuesto.subtotal,
-        iva: presupuesto.iva,
         total: presupuesto.total,
         estado: presupuestoOriginal.estado || 'Pendiente',
       };
@@ -418,10 +411,6 @@ export default function EditarPresupuesto({ params }) {
               <div className="flex justify-between py-2 border-t border-gray-200">
                 <span className="text-gray-700">Subtotal:</span>
                 <span className="font-medium">${presupuesto.subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between py-2 border-t border-gray-200">
-                <span className="text-gray-700">IVA (21%):</span>
-                <span className="font-medium">${presupuesto.iva.toFixed(2)}</span>
               </div>
               <div className="flex justify-between py-2 text-lg font-bold border-t border-b border-gray-200">
                 <span>Total:</span>
