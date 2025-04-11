@@ -4,13 +4,14 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCfZjvzab67TlMv_rc2jr2NHEINwnFxwVY",
-    authDomain: "sincorp-deb4b.firebaseapp.com",
-    projectId: "sincorp-deb4b",
-    storageBucket: "sincorp-deb4b.firebasestorage.app",
-    messagingSenderId: "170765298334",
-    appId: "1:170765298334:web:b89140b3334e28e8a7698f"
-  };
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
 
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);

@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   logoSubText: {
-    fontSize: 10,
+    fontSize: 8,
     color: '#666',
     marginTop: 2
   },
@@ -198,15 +198,15 @@ const PresupuestoPDF = ({ presupuesto }) => (
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Text style={styles.logoText}>
-            <Text style={{ color: '#1A5276' }}>S</Text>
-            <Text style={{ color: '#2E86C1' }}>INCORP</Text>
+            <Text style={{ color: '#1A5276' }}>Sin</Text>
+            <Text style={{ color: '#2E86C1' }}>corp</Text>
           </Text>
-          <Text style={styles.logoSubText}>SERVICIOS INTEGRALES</Text>
+          <Text style={styles.logoSubText}> Servicios Integrales</Text>
         </View>
         <View style={styles.headerInfo}>
-          <Text>Email: info@sincorp.com.ar</Text>
-          <Text>Teléfono: (011) 1234-5678</Text>
-          <Text>Web: www.sincorp.com.ar</Text>
+          <Text>Email: sincorpserviciosintegrales@gmail.com</Text>
+          <Text>Teléfono: (351) 681 0777</Text>
+          <Text>Web: www.sincorp.vercel.app</Text>
         </View>
       </View>
 
@@ -268,9 +268,9 @@ const PresupuestoPDF = ({ presupuesto }) => (
         {presupuesto.items.map((item, index) => (
           <View key={item.id} style={[styles.tableRow, index % 2 === 1 ? styles.oddRow : {}]}>
             <Text style={[styles.col4, styles.colContent]}>{item.descripcion}</Text>
-            <Text style={[styles.col1, styles.colContent]}>{item.cantidad}</Text>
-            <Text style={[styles.col2, styles.colContent]}>${item.precioUnitario.toFixed(2)}</Text>
-            <Text style={[styles.col2, styles.colContent]}>${item.subtotal.toFixed(2)}</Text>
+            <Text style={[styles.col1, styles.colContent]}>{parseFloat(item.cantidad || 0)}</Text>
+            <Text style={[styles.col2, styles.colContent]}>${parseFloat(item.precioUnitario || 0).toFixed(2)}</Text>
+            <Text style={[styles.col2, styles.colContent]}>${parseFloat(item.subtotal || 0).toFixed(2)}</Text>
           </View>
         ))}
 
@@ -278,15 +278,11 @@ const PresupuestoPDF = ({ presupuesto }) => (
         <View style={styles.totals}>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Subtotal:</Text>
-            <Text style={styles.totalValue}>${presupuesto.subtotal.toFixed(2)}</Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>IVA (21%):</Text>
-            <Text style={styles.totalValue}>${presupuesto.iva.toFixed(2)}</Text>
+            <Text style={styles.totalValue}>${parseFloat(presupuesto.subtotal || 0).toFixed(2)}</Text>
           </View>
           <View style={styles.grandTotal}>
             <Text style={styles.grandTotalLabel}>TOTAL:</Text>
-            <Text style={styles.grandTotalValue}>${presupuesto.total.toFixed(2)}</Text>
+            <Text style={styles.grandTotalValue}>${parseFloat(presupuesto.total || 0).toFixed(2)}</Text>
           </View>
         </View>
       </View>
@@ -299,8 +295,8 @@ const PresupuestoPDF = ({ presupuesto }) => (
 
       {/* Pie de página */}
       <View style={styles.footer}>
-        <Text>SINCORP Servicios Integrales - CUIT: 20-12345678-9</Text>
-        <Text>Av. Rivadavia 1234, Buenos Aires - Tel: (011) 1234-5678 - www.sincorp.com.ar</Text>
+        <Text>SINCORP Servicios Integrales - CUIT: 20-24471842-7</Text>
+        <Text>Av. Luciano Torrent 4800, 5000 - Cordoba - Tel: (351) 681 0777 - www.sincorp.vercel.app</Text>
       </View>
     </Page>
   </Document>

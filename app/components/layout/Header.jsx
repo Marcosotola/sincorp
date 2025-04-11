@@ -34,19 +34,19 @@ const Header = () => {
 
   return (
     <header className={` fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-md py-1' : 'bg-transparent py-1'}`}>
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center">
+      <div className="container px-4 mx-auto">
+        <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center group">
             <div className="relative mr-2">
-              <div className="absolute inset-0 bg-primary rounded-full transform rotate-45 transition-transform group-hover:rotate-90"></div>
-              <div className="absolute inset-0 bg-secondary rounded-full transform -rotate-45 scale-75 transition-transform group-hover:-rotate-90"></div>
-{/*               <span className="relative z-10 text-3xl font-montserrat font-bold text-white flex items-center justify-center w-10 h-10">
+              <div className="absolute inset-0 transition-transform transform rotate-45 rounded-full bg-primary group-hover:rotate-90"></div>
+              <div className="absolute inset-0 transition-transform transform scale-75 -rotate-45 rounded-full bg-secondary group-hover:-rotate-90"></div>
+{/*               <span className="relative z-10 flex items-center justify-center w-10 h-10 text-3xl font-bold text-white font-montserrat">
                 S
               </span> */}
             </div>
             <div className=''>
-              <span className="text-5xl font-montserrat font-bold ">
+              <span className="text-5xl font-bold font-montserrat ">
                 <span className={`${scrolled ? 'text-primary' : 'text-white'}`}>Sin</span>
                 <span className={`${scrolled ? 'text-secondary' : 'text-white'}`}>corp</span>
               </span>
@@ -55,7 +55,7 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1">
+          <nav className="items-center hidden space-x-1 md:flex">
             <Link 
               href="/" 
               className={`group relative px-3 py-2 rounded-md transition-all duration-200 ${scrolled ? 'text-gray-700 hover:text-primary' : 'text-white hover:text-white'}`}
@@ -80,19 +80,19 @@ const Header = () => {
               
               {/* Dropdown */}
               <div className={`absolute top-full left-0 w-56 mt-1 bg-white shadow-lg rounded-md overflow-hidden transition-all duration-300 ${activeDropdown === 'servicios' ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
-                <Link href="/servicios/automatismo" className="block px-4 py-2 text-gray-700 hover:bg-primary hover:text-white transition-colors">
+                <Link href="/servicios/automatismo" className="block px-4 py-2 text-gray-700 transition-colors hover:bg-primary hover:text-white">
                   Automatismo
                 </Link>
-                <Link href="/servicios/electricidad" className="block px-4 py-2 text-gray-700 hover:bg-primary hover:text-white transition-colors">
+                <Link href="/servicios/electricidad" className="block px-4 py-2 text-gray-700 transition-colors hover:bg-primary hover:text-white">
                   Electricidad
                 </Link>
-                <Link href="/servicios/climatizacion" className="block px-4 py-2 text-gray-700 hover:bg-primary hover:text-white transition-colors">
+                <Link href="/servicios/climatizacion" className="block px-4 py-2 text-gray-700 transition-colors hover:bg-primary hover:text-white">
                   Climatización
                 </Link>
-                <Link href="/servicios/seguridad" className="block px-4 py-2 text-gray-700 hover:bg-primary hover:text-white transition-colors">
+                <Link href="/servicios/seguridad" className="block px-4 py-2 text-gray-700 transition-colors hover:bg-primary hover:text-white">
                   Seguridad
                 </Link>
-                <Link href="/servicios" className="block px-4 py-2 text-primary font-medium hover:bg-primary hover:text-white transition-colors">
+                <Link href="/servicios" className="block px-4 py-2 font-medium transition-colors text-primary hover:bg-primary hover:text-white">
                   Ver todos
                 </Link>
               </div>
@@ -132,7 +132,7 @@ const Header = () => {
           <nav className="md:hidden mt-4 py-3 bg-white shadow-lg rounded-lg max-h-[70vh] overflow-y-auto">
             <Link 
               href="/" 
-              className="flex items-center px-4 py-3 text-gray-700 hover:bg-primary hover:text-white rounded-md transition-colors"
+              className="flex items-center px-4 py-3 text-gray-700 transition-colors rounded-md hover:bg-primary hover:text-white"
               onClick={() => setIsMenuOpen(false)}
             >
               <Home size={18} className="mr-2" />
@@ -150,7 +150,7 @@ const Header = () => {
               </button>
               
               {activeDropdown === 'mobileServicios' && (
-                <div className="mt-2 ml-6 border-l-2 border-primary pl-4 space-y-2">
+                <div className="pl-4 mt-2 ml-6 space-y-2 border-l-2 border-primary">
                   <Link 
                     href="/servicios/automatismo" 
                     className="block py-2 text-gray-700 hover:text-primary"
@@ -181,7 +181,7 @@ const Header = () => {
                   </Link>
                   <Link 
                     href="/servicios" 
-                    className="block py-2 text-primary font-medium"
+                    className="block py-2 font-medium text-primary"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Ver todos los servicios
@@ -192,7 +192,7 @@ const Header = () => {
             
             <Link 
               href="/nosotros" 
-              className="flex items-center px-4 py-3 text-gray-700 hover:bg-primary hover:text-white rounded-md transition-colors"
+              className="flex items-center px-4 py-3 text-gray-700 transition-colors rounded-md hover:bg-primary hover:text-white"
               onClick={() => setIsMenuOpen(false)}
             >
               <Users size={18} className="mr-2" />
@@ -201,7 +201,7 @@ const Header = () => {
             
             <Link 
               href="/contacto" 
-              className="flex items-center mx-4 mt-2 px-4 py-3 bg-primary text-white rounded-md hover:bg-primary-light transition-colors"
+              className="flex items-center px-4 py-3 mx-4 mt-2 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
               onClick={() => setIsMenuOpen(false)}
             >
               <MessageSquare size={18} className="mr-2" />

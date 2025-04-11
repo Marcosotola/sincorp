@@ -1,4 +1,3 @@
-// app/admin/presupuestos/nuevo/page.jsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -31,11 +30,10 @@ export default function NuevoPresupuesto() {
         fecha: new Date().toISOString().split('T')[0],
         validez: '30 días',
         items: [
-            { id: 1, descripcion: '', cantidad: 1, precioUnitario: 0, subtotal: 0 }
+            { id: 1, descripcion: '', cantidad: '', precioUnitario: '', subtotal: 0 }
         ],
-        notas: 'Este presupuesto tiene una validez de 30 días a partir de la fecha de emisión.\nForma de pago: 50% anticipado, 50% contra entrega.',
+        notas: 'Este presupuesto tiene una validez de 30 días a partir de la fecha de emisión.',
         subtotal: 0,
-        iva: 0,
         total: 0
     });
 
@@ -73,7 +71,9 @@ export default function NuevoPresupuesto() {
             if (item.id === id) {
                 const updatedItem = { ...item, [field]: value };
                 if (field === 'cantidad' || field === 'precioUnitario') {
-                    updatedItem.subtotal = parseFloat(updatedItem.cantidad || 0) * parseFloat(updatedItem.precioUnitario || 0);
+                    const cantidad = parseFloat(updatedItem.cantidad) || 0;
+                    const precio = parseFloat(updatedItem.precioUnitario) || 0;
+                    updatedItem.subtotal = cantidad * precio;
                 }
                 return updatedItem;
             }
@@ -81,14 +81,12 @@ export default function NuevoPresupuesto() {
         });
 
         const subtotal = updatedItems.reduce((sum, item) => sum + (item.subtotal || 0), 0);
-        const iva = subtotal * 0.21;
 
         setPresupuesto({
             ...presupuesto,
             items: updatedItems,
             subtotal: subtotal,
-            iva: iva,
-            total: subtotal + iva
+            total: subtotal
         });
     };
 
@@ -98,7 +96,7 @@ export default function NuevoPresupuesto() {
             ...presupuesto,
             items: [
                 ...presupuesto.items,
-                { id: newId, descripcion: '', cantidad: 1, precioUnitario: 0, subtotal: 0 }
+                { id: newId, descripcion: '', cantidad: '', precioUnitario: '', subtotal: 0 }
             ]
         });
     };
@@ -108,14 +106,12 @@ export default function NuevoPresupuesto() {
 
         const updatedItems = presupuesto.items.filter(item => item.id !== id);
         const subtotal = updatedItems.reduce((sum, item) => sum + (item.subtotal || 0), 0);
-        const iva = subtotal * 0.21;
 
         setPresupuesto({
             ...presupuesto,
             items: updatedItems,
             subtotal: subtotal,
-            iva: iva,
-            total: subtotal + iva
+            total: subtotal
         });
     };
 
@@ -132,7 +128,6 @@ export default function NuevoPresupuesto() {
                 items: presupuesto.items,
                 notas: presupuesto.notas,
                 subtotal: presupuesto.subtotal,
-                iva: presupuesto.iva,
                 total: presupuesto.total,
                 estado: 'Pendiente',
                 usuarioCreador: user.email
@@ -152,9 +147,9 @@ export default function NuevoPresupuesto() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                    <div className="w-12 h-12 mx-auto border-b-2 rounded-full animate-spin border-primary"></div>
                     <p className="mt-4">Cargando...</p>
                 </div>
             </div>
@@ -164,21 +159,21 @@ export default function NuevoPresupuesto() {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header del administrador */}
-            <header className="bg-primary text-white shadow">
-                <div className="container mx-auto px-4 py-20 flex justify-between items-center">
+            <header className="text-white shadow bg-primary">
+                <div className="container flex items-center justify-between px-4 py-20 mx-auto">
                     <div className="flex items-center">
                         <div className="relative mr-2">
-                            <div className="absolute inset-0 bg-white/30 rounded-full transform rotate-45"></div>
-                            <div className="absolute inset-0 bg-white/20 rounded-full transform -rotate-45 scale-75"></div>
+                            <div className="absolute inset-0 transform rotate-45 rounded-full bg-white/30"></div>
+                            <div className="absolute inset-0 transform scale-75 -rotate-45 rounded-full bg-white/20"></div>
 
                         </div>
-                        <h1 className="text-xl font-montserrat font-bold">Panel de Administración</h1>
+                        <h1 className="text-xl font-bold font-montserrat">Panel de Administración</h1>
                     </div>
                     <div className="flex items-center space-x-4">
                         <span className="hidden md:inline">{user?.email}</span>
                         <button
                             onClick={handleLogout}
-                            className="text-white p-2 rounded-md hover:bg-primary-light flex items-center"
+                            className="flex items-center p-2 text-white rounded-md hover:bg-primary-light"
                         >
                             <LogOut size={18} className="mr-2" /> Salir
                         </button>
@@ -186,42 +181,43 @@ export default function NuevoPresupuesto() {
                 </div>
             </header>
 
-            <div className="container mx-auto px-4 py-8">
+            <div className="container px-4 py-8 mx-auto">
                 <div className="flex flex-wrap items-center justify-between mb-8">
                     <div className="flex items-center mb-4">
                         <Link
                             href="/admin/dashboard"
-                            className="text-primary hover:underline flex items-center mr-4"
+                            className="flex items-center mr-4 text-primary hover:underline"
                         >
                             <Home size={16} className="mr-1" /> Dashboard
                         </Link>
-                        <span className="text-gray-500 mx-2">/</span>
+                        <span className="mx-2 text-gray-500">/</span>
                         <Link
                             href="/admin/presupuestos"
-                            className="text-primary hover:underline flex items-center mr-4"
+                            className="flex items-center mr-4 text-primary hover:underline"
                         >
                             Presupuestos
                         </Link>
-                        <span className="text-gray-500 mx-2">/</span>
+                        <span className="mx-2 text-gray-500">/</span>
                         <span className="text-gray-700">Nuevo Presupuesto</span>
                     </div>
 
-                    <div className="flex space-x-2 mb-4">
+                    <div className="flex mb-4 space-x-2">
                         <button
                             onClick={handleGuardarPresupuesto}
                             disabled={guardando}
-                            className="bg-success text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center disabled:opacity-50"
+                            className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-success hover:bg-green-700 disabled:opacity-50"
                         >
                             <Save size={18} className="mr-2" />
                             {guardando ? 'Guardando...' : 'Guardar'}
                         </button>
-                        <button
-                            className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-light transition-colors flex items-center"
+{/*                         <button
+                            className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
                         >
                             <Eye size={18} className="mr-2" /> Vista Previa
-                        </button>
+
+                        </button> */}
                         <button
-                            className="bg-secondary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors flex items-center"
+                            className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
                         >
                             <PDFDownloadLink
                                 document={<PresupuestoPDF presupuesto={{ ...presupuesto, cliente }} />}
@@ -231,7 +227,7 @@ export default function NuevoPresupuesto() {
                             >
                                 {({ blob, url, loading, error }) =>
                                     loading ?
-                                        <span><span className="animate-spin inline-block h-4 w-4 border-t-2 border-white rounded-full mr-2"></span> Generando PDF...</span> :
+                                        <span><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
                                         <span><Download size={18} className="mr-2" /> Descargar PDF</span>
                                 }
                             </PDFDownloadLink>
@@ -239,35 +235,36 @@ export default function NuevoPresupuesto() {
                     </div>
                 </div>
 
-                <h2 className="text-2xl font-montserrat font-bold mb-6 text-primary">
+                <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
                     Nuevo Presupuesto
                 </h2>
 
                 <div className="grid grid-cols-1 gap-6">
                     {/* Información del presupuesto */}
-                    <div className="bg-white p-6 rounded-lg shadow-md">
-                        <h3 className="text-lg font-semibold mb-4 text-gray-700">Información del Presupuesto</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-6 bg-white rounded-lg shadow-md">
+                        <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Presupuesto</h3>
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Número</label>
+                                <label className="block mb-1 text-sm font-medium text-gray-700">Número</label>
                                 <input
                                     type="text"
                                     value={presupuesto.numero}
                                     disabled
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                                    className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                                <label className="block mb-1 text-sm font-medium text-gray-700">Fecha</label>
                                 <input
                                     type="date"
                                     value={presupuesto.fecha}
                                     onChange={(e) => setPresupuesto({ ...presupuesto, fecha: e.target.value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                    required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Validez</label>
+                                <label className="block mb-1 text-sm font-medium text-gray-700">Validez</label>
                                 <input
                                     type="text"
                                     value={presupuesto.validez}
@@ -279,11 +276,11 @@ export default function NuevoPresupuesto() {
                     </div>
 
                     {/* Información del cliente */}
-                    <div className="bg-white p-6 rounded-lg shadow-md">
-                        <h3 className="text-lg font-semibold mb-4 text-gray-700">Información del Cliente</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-6 bg-white rounded-lg shadow-md">
+                        <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                                <label className="block mb-1 text-sm font-medium text-gray-700">Nombre</label>
                                 <input
                                     type="text"
                                     name="nombre"
@@ -293,7 +290,7 @@ export default function NuevoPresupuesto() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
+                                <label className="block mb-1 text-sm font-medium text-gray-700">Empresa</label>
                                 <input
                                     type="text"
                                     name="empresa"
@@ -303,7 +300,7 @@ export default function NuevoPresupuesto() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <label className="block mb-1 text-sm font-medium text-gray-700">Email</label>
                                 <input
                                     type="email"
                                     name="email"
@@ -313,7 +310,7 @@ export default function NuevoPresupuesto() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                                <label className="block mb-1 text-sm font-medium text-gray-700">Teléfono</label>
                                 <input
                                     type="text"
                                     name="telefono"
@@ -323,7 +320,7 @@ export default function NuevoPresupuesto() {
                                 />
                             </div>
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+                                <label className="block mb-1 text-sm font-medium text-gray-700">Dirección</label>
                                 <input
                                     type="text"
                                     name="direccion"
@@ -336,17 +333,17 @@ export default function NuevoPresupuesto() {
                     </div>
 
                     {/* Items del presupuesto */}
-                    <div className="bg-white p-6 rounded-lg shadow-md">
-                        <h3 className="text-lg font-semibold mb-4 text-gray-700">Detalle del Presupuesto</h3>
+                    <div className="p-6 bg-white rounded-lg shadow-md">
+                        <h3 className="mb-4 text-lg font-semibold text-gray-700">Detalle del Presupuesto</h3>
                         <div className="overflow-x-auto">
                             <table className="min-w-full">
                                 <thead>
                                     <tr className="bg-gray-100">
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Descripción</th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-24">Cantidad</th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-32">Precio Unit.</th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-32">Subtotal</th>
-                                        <th className="px-4 py-2 w-16"></th>
+                                        <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Descripción</th>
+                                        <th className="w-24 px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Cantidad</th>
+                                        <th className="w-32 px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Precio Unit.</th>
+                                        <th className="w-32 px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Subtotal</th>
+                                        <th className="w-16 px-4 py-2"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -365,22 +362,26 @@ export default function NuevoPresupuesto() {
                                                 <input
                                                     type="number"
                                                     value={item.cantidad}
-                                                    onChange={(e) => handleItemChange(item.id, 'cantidad', parseInt(e.target.value) || 0)}
-                                                    className="w-full px-2 py-1 border border-gray-300 rounded-md"
-                                                    min="1"
+                                                    onChange={(e) =>
+                                                        handleItemChange(item.id, 'cantidad', e.target.value)
+                                                    }
+                                                    className="w-full px-2 py-1 border border-gray-300 rounded-md [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                    placeholder="0"
                                                 />
                                             </td>
                                             <td className="px-4 py-2">
                                                 <input
                                                     type="number"
                                                     value={item.precioUnitario}
-                                                    onChange={(e) => handleItemChange(item.id, 'precioUnitario', parseFloat(e.target.value) || 0)}
-                                                    className="w-full px-2 py-1 border border-gray-300 rounded-md"
-                                                    min="0"
-                                                    step="0.01"
+                                                    onChange={(e) =>
+                                                        handleItemChange(item.id, 'precioUnitario', e.target.value)
+                                                    }
+                                                    className="w-full px-2 py-1 border border-gray-300 rounded-md [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                    placeholder="0"
                                                 />
                                             </td>
-                                            <td className="px-4 py-2 text-gray-700 font-medium">
+
+                                            <td className="px-4 py-2 font-medium text-gray-700">
                                                 ${item.subtotal ? item.subtotal.toFixed(2) : '0.00'}
                                             </td>
                                             <td className="px-4 py-2">
@@ -407,16 +408,12 @@ export default function NuevoPresupuesto() {
                             </button>
                         </div>
 
-                        <div className="mt-6 ml-auto w-full md:w-64">
+                        <div className="w-full mt-6 ml-auto md:w-64">
                             <div className="flex justify-between py-2 border-t border-gray-200">
                                 <span className="text-gray-700">Subtotal:</span>
                                 <span className="font-medium">${presupuesto.subtotal.toFixed(2)}</span>
                             </div>
-                            <div className="flex justify-between py-2 border-t border-gray-200">
-                                <span className="text-gray-700">IVA (21%):</span>
-                                <span className="font-medium">${presupuesto.iva.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between py-2 border-t border-b border-gray-200 text-lg font-bold">
+                            <div className="flex justify-between py-2 text-lg font-bold border-t border-b border-gray-200">
                                 <span>Total:</span>
                                 <span>${presupuesto.total.toFixed(2)}</span>
                             </div>
@@ -424,12 +421,12 @@ export default function NuevoPresupuesto() {
                     </div>
 
                     {/* Notas adicionales */}
-                    <div className="bg-white p-6 rounded-lg shadow-md">
-                        <h3 className="text-lg font-semibold mb-4 text-gray-700">Notas Adicionales</h3>
+                    <div className="p-6 bg-white rounded-lg shadow-md">
+                        <h3 className="mb-4 text-lg font-semibold text-gray-700">Notas Adicionales</h3>
                         <textarea
                             value={presupuesto.notas}
                             onChange={(e) => setPresupuesto({ ...presupuesto, notas: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md h-24"
+                            className="w-full h-24 px-3 py-2 border border-gray-300 rounded-md"
                             placeholder="Información adicional, términos y condiciones, etc."
                         ></textarea>
                     </div>
@@ -438,14 +435,14 @@ export default function NuevoPresupuesto() {
                     <div className="flex justify-end space-x-2">
                         <button
                             onClick={() => router.push('/admin/presupuestos')}
-                            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100 transition-colors"
+                            className="px-4 py-2 text-gray-700 transition-colors border border-gray-300 rounded-md hover:bg-gray-100"
                         >
                             Cancelar
                         </button>
                         <button
                             onClick={handleGuardarPresupuesto}
                             disabled={guardando}
-                            className="bg-success text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center disabled:opacity-50"
+                            className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-success hover:bg-green-700 disabled:opacity-50"
                         >
                             <Save size={18} className="mr-2" />
                             {guardando ? 'Guardando...' : 'Guardar Presupuesto'}
