@@ -12,19 +12,19 @@ import PresupuestoPDF from '../../../components/pdf/PresupuestoPDF';
 
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
 const formatMoney = (amount) => {
-  if (amount === undefined || amount === null) return '$0,00';
-  
-  // Convertir a número si es string
-  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-  
-  // Formatear con 2 decimales y reemplazar punto por coma para decimales
-  const formatted = num.toFixed(2).replace('.', ',');
-  
-  // Agregar separadores de miles (puntos)
-  const parts = formatted.split(',');
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  
-  return '$' + parts.join(',');
+    if (amount === undefined || amount === null) return '$0,00';
+
+    // Convertir a número si es string
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+
+    // Formatear con 2 decimales y reemplazar punto por coma para decimales
+    const formatted = num.toFixed(2).replace('.', ',');
+
+    // Agregar separadores de miles (puntos)
+    const parts = formatted.split(',');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    return '$' + parts.join(',');
 };
 
 export default function NuevoPresupuesto() {
@@ -149,7 +149,7 @@ export default function NuevoPresupuesto() {
                 estado: 'Pendiente',
                 usuarioCreador: user.email
             };
-            
+
             // Guardar en Firestore
             await crearPresupuesto(presupuestoData);
             alert('Presupuesto guardado exitosamente');
@@ -227,7 +227,7 @@ export default function NuevoPresupuesto() {
                             <Save size={18} className="mr-2" />
                             {guardando ? 'Guardando...' : 'Guardar'}
                         </button>
-{/*                         <button
+                        {/*                         <button
                             className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
                         >
                             <Eye size={18} className="mr-2" /> Vista Previa
@@ -367,13 +367,13 @@ export default function NuevoPresupuesto() {
                                     {presupuesto.items.map((item) => (
                                         <tr key={item.id}>
                                             <td className="px-4 py-2">
-                                                <input
-                                                    type="text"
+                                                <textarea
                                                     value={item.descripcion}
                                                     onChange={(e) => handleItemChange(item.id, 'descripcion', e.target.value)}
                                                     className="w-full px-2 py-1 border border-gray-300 rounded-md"
                                                     placeholder="Descripción del servicio"
-                                                />
+                                                    rows={5} // Puedes ajustar el número de filas según necesites
+                                                ></textarea>
                                             </td>
                                             <td className="px-4 py-2">
                                                 <input
