@@ -4,7 +4,25 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FilePlus, FileText, Home, LogOut, BarChart, X } from 'lucide-react';
+import { 
+  FilePlus, 
+  FileText, 
+  Home, 
+  LogOut, 
+  BarChart3, 
+  DollarSign, 
+  FileCheck, 
+  Receipt, 
+  ScrollText,
+  TrendingUp,
+  Users,
+  Calendar,
+  ChevronRight,
+  Menu,
+  X,
+  Clock,
+  AlertCircle
+} from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
@@ -12,17 +30,15 @@ import { auth, db } from '../../lib/firebase';
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [estadisticas, setEstadisticas] = useState({
-    total: 0,
-    pendientes: 0,
-    aprobados: 0,
-    rechazados: 0,
-    ultimosPresupuestos: []
+    presupuestos: { total: 0, pendientes: 0, aprobados: 0 },
+    estados: { total: 0, ultimos: [] },
+    // Para futuro: remitos, recibos, etc.
   });
   const router = useRouter();
 
   useEffect(() => {
-    // Verificar autenticación con Firebase
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
@@ -33,47 +49,42 @@ export default function Dashboard() {
       }
     });
 
-    // Limpiar la suscripción al desmontar
     return () => unsubscribe();
   }, [router]);
 
   const cargarEstadisticas = async () => {
     try {
+      // Estadísticas de presupuestos
       const presupuestosRef = collection(db, 'presupuestos');
+      const presupuestosSnapshot = await getDocs(presupuestosRef);
+      const presupuestosData = presupuestosSnapshot.docs.map(doc => doc.data());
+      
+      const presupuestosPendientes = presupuestosData.filter(p => p.estado === 'Pendiente').length;
+      const presupuestosAprobados = presupuestosData.filter(p => p.estado === 'Aprobado').length;
 
-      // Contar total de presupuestos
-      const totalSnapshot = await getDocs(presupuestosRef);
-      const total = totalSnapshot.size;
+      // Estadísticas de estados de cuenta
+      const estadosRef = collection(db, 'estados');
+      const estadosSnapshot = await getDocs(estadosRef);
+      const estadosTotal = estadosSnapshot.size;
 
-      // Contar presupuestos pendientes
-      const pendientesQuery = query(presupuestosRef, where('estado', '==', 'Pendiente'));
-      const pendientesSnapshot = await getDocs(pendientesQuery);
-      const pendientes = pendientesSnapshot.size;
-
-      // Contar presupuestos aprobados
-      const aprobadosQuery = query(presupuestosRef, where('estado', '==', 'Aprobado'));
-      const aprobadosSnapshot = await getDocs(aprobadosQuery);
-      const aprobados = aprobadosSnapshot.size;
-
-      // Contar presupuestos rechazados
-      const rechazadosQuery = query(presupuestosRef, where('estado', '==', 'Rechazado'));
-      const rechazadosSnapshot = await getDocs(rechazadosQuery);
-      const rechazados = rechazadosSnapshot.size;
-
-      // Obtener últimos presupuestos
-      const ultimosQuery = query(presupuestosRef, orderBy('fechaCreacion', 'desc'), limit(5));
-      const ultimosSnapshot = await getDocs(ultimosQuery);
-      const ultimosPresupuestos = ultimosSnapshot.docs.map(doc => ({
+      // Últimos estados
+      const ultimosEstadosQuery = query(estadosRef, orderBy('fechaCreacion', 'desc'), limit(3));
+      const ultimosEstadosSnapshot = await getDocs(ultimosEstadosQuery);
+      const ultimosEstados = ultimosEstadosSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
 
       setEstadisticas({
-        total,
-        pendientes,
-        aprobados,
-        rechazados,
-        ultimosPresupuestos
+        presupuestos: {
+          total: presupuestosSnapshot.size,
+          pendientes: presupuestosPendientes,
+          aprobados: presupuestosAprobados
+        },
+        estados: {
+          total: estadosTotal,
+          ultimos: ultimosEstados
+        }
       });
     } catch (error) {
       console.error('Error al cargar estadísticas:', error);
@@ -100,18 +111,87 @@ export default function Dashboard() {
     );
   }
 
+  // Definir módulos del sistema
+  const modulos = [
+    {
+      id: 'presupuestos',
+      titulo: 'Presupuestos',
+      icono: FileText,
+      color: 'bg-blue-500',
+      colorClaro: 'bg-blue-100',
+      colorTexto: 'text-blue-600',
+      descripcion: 'Crear y gestionar presupuestos',
+      rutas: {
+        nuevo: '/admin/presupuestos/nuevo',
+        historial: '/admin/presupuestos'
+      },
+      activo: true
+    },
+    {
+      id: 'estados',
+      titulo: 'Estados de Cuenta',
+      icono: DollarSign,
+      color: 'bg-green-500',
+      colorClaro: 'bg-green-100',
+      colorTexto: 'text-green-600',
+      descripcion: 'Control de estados de cuenta',
+      rutas: {
+        nuevo: '/admin/estados/nuevo',
+        historial: '/admin/estados'
+      },
+      activo: true
+    },
+    {
+      id: 'remitos',
+      titulo: 'Remitos',
+      icono: FileCheck,
+      color: 'bg-purple-500',
+      colorClaro: 'bg-purple-100',
+      colorTexto: 'text-purple-600',
+      descripcion: 'Gestión de remitos',
+      rutas: {
+        nuevo: '/admin/remitos/nuevo',
+        historial: '/admin/remitos'
+      },
+      activo: false,
+      proximamente: true
+    },
+    {
+      id: 'recibos',
+      titulo: 'Recibos',
+      icono: Receipt,
+      color: 'bg-orange-500',
+      colorClaro: 'bg-orange-100',
+      colorTexto: 'text-orange-600',
+      descripcion: 'Administrar recibos',
+      rutas: {
+        nuevo: '/admin/recibos/nuevo',
+        historial: '/admin/recibos'
+      },
+      activo: false,
+      proximamente: true
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header del administrador */}
-      <header className="text-white shadow bg-primary">
-        <div className="container flex items-center justify-between px-4 py-20 mx-auto">
+      {/* Header mejorado */}
+      <header className="sticky top-0 z-50 text-white shadow-lg bg-primary">
+        <div className="container flex items-center justify-between px-4 py-4 mx-auto">
           <div className="flex items-center">
-            <div className="relative mr-2">
-              <div className="absolute inset-0 transform rotate-45 rounded-full bg-white/30"></div>
-              <div className="absolute inset-0 transform scale-75 -rotate-45 rounded-full bg-white/20"></div>
-
+            <button
+              className="mr-4 md:hidden"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+            <div className="flex items-center">
+              <div className="relative mr-2">
+                <div className="absolute inset-0 transform rotate-45 rounded-full bg-white/30"></div>
+                <div className="absolute inset-0 transform scale-75 -rotate-45 rounded-full bg-white/20"></div>
+              </div>
+              <h1 className="text-lg font-bold md:text-xl font-montserrat">Panel de Administración</h1>
             </div>
-            <h1 className="text-xl font-bold font-montserrat">Panel de Administración</h1>
           </div>
           <div className="flex items-center space-x-4">
             <span className="hidden md:inline">{user?.email}</span>
@@ -119,162 +199,173 @@ export default function Dashboard() {
               onClick={handleLogout}
               className="flex items-center p-2 text-white rounded-md hover:bg-primary-light"
             >
-              <LogOut size={18} className="mr-2" /> Salir
+              <LogOut size={18} className="mr-2" />
+              <span className="hidden md:inline">Salir</span>
             </button>
           </div>
         </div>
+
+        {/* Menú móvil */}
+        {mobileMenuOpen && (
+          <div className="absolute w-full bg-white shadow-lg top-full md:hidden">
+            <nav className="flex flex-col p-4">
+              <Link href="/" className="py-2 text-gray-700 hover:text-primary">
+                Volver al sitio principal
+              </Link>
+              {modulos.filter(m => m.activo).map(modulo => (
+                <div key={modulo.id} className="py-2">
+                  <p className="font-semibold text-gray-800">{modulo.titulo}</p>
+                  <Link href={modulo.rutas.nuevo} className="block py-1 pl-4 text-gray-600 hover:text-primary">
+                    Nuevo
+                  </Link>
+                  <Link href={modulo.rutas.historial} className="block py-1 pl-4 text-gray-600 hover:text-primary">
+                    Historial
+                  </Link>
+                </div>
+              ))}
+            </nav>
+          </div>
+        )}
       </header>
 
       <div className="container px-4 py-8 mx-auto">
-        <div className="flex flex-wrap mb-8">
-          <Link
-            href="/"
-            className="flex items-center mb-4 mr-4 text-primary hover:underline"
-          >
-            <Home size={16} className="mr-1" /> Volver al sitio principal
-          </Link>
+        {/* Título y bienvenida */}
+        <div className="mb-8">
+          <h2 className="mb-2 text-2xl font-bold md:text-3xl font-montserrat text-primary">
+            ¡Bienvenido, {user?.displayName || user?.email?.split('@')[0]}!
+          </h2>
+          <p className="text-gray-600">
+            {new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
         </div>
 
-        <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
-          Bienvenido al sistema de administración
-        </h2>
+        {/* Stats Cards */}
+        
 
-        <h3 className="mb-4 text-xl font-bold font-montserrat text-primary">
-          Acciones rápidas
-        </h3>
-
-        <div className="grid grid-cols-1 gap-6 mb-4 md:grid-cols-2 lg:grid-cols-3">
-          <Link
-            href="/admin/presupuestos/nuevo"
-            className="p-6 transition-shadow bg-white rounded-lg shadow-md hover:shadow-lg"
-          >
-            <div className="p-4 mb-4 rounded-full bg-primary/10 w-fit">
-              <FilePlus size={32} className="text-primary" />
-            </div>
-            <h3 className="mb-2 text-xl font-bold font-montserrat">Nuevo Presupuesto</h3>
-            <p className="text-gray-600">
-              Crear un nuevo presupuesto personalizado para un cliente.
-            </p>
-          </Link>
-
-          <Link
-            href="/admin/presupuestos"
-            className="p-6 transition-shadow bg-white rounded-lg shadow-md hover:shadow-lg"
-          >
-            <div className="p-4 mb-4 rounded-full bg-primary/10 w-fit">
-              <FileText size={32} className="text-primary" />
-            </div>
-            <h3 className="mb-2 text-xl font-bold font-montserrat">Historial de Presupuestos</h3>
-            <p className="text-gray-600">
-              Ver y gestionar todos los presupuestos creados.
-            </p>
-          </Link>
+        {/* Módulos del sistema */}
+        <h3 className="mb-4 text-xl font-bold text-gray-800">Documentos</h3>
+        <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-4">
+          {modulos.map(modulo => {
+            const Icono = modulo.icono;
+            return (
+              <div
+                key={modulo.id}
+                className={`relative overflow-hidden rounded-lg shadow-md transition-all ${
+                  modulo.activo ? 'hover:shadow-lg cursor-pointer' : 'opacity-75'
+                }`}
+              >
+                {modulo.proximamente && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
+                    <span className="px-3 py-1 text-sm font-semibold text-white bg-yellow-500 rounded-full">
+                      Próximamente
+                    </span>
+                  </div>
+                )}
+                
+                <div className={`p-6 ${modulo.activo ? modulo.color : 'bg-gray-300'} text-white`}>
+                  <Icono size={32} />
+                  <h4 className="mt-4 text-lg font-bold">{modulo.titulo}</h4>
+                  <p className="text-sm opacity-90">{modulo.descripcion}</p>
+                </div>
+                
+                {modulo.activo && (
+                  <div className="p-4 bg-white">
+                    <div className="space-y-2">
+                      <Link
+                        href={modulo.rutas.nuevo}
+                        className={`flex items-center justify-between p-2 rounded-md transition-colors ${modulo.colorClaro} ${modulo.colorTexto} hover:opacity-80`}
+                      >
+                        <span className="flex items-center">
+                          <FilePlus size={16} className="mr-2" />
+                          Crear nuevo
+                        </span>
+                        <ChevronRight size={16} />
+                      </Link>
+                      <Link
+                        href={modulo.rutas.historial}
+                        className="flex items-center justify-between p-2 text-gray-700 transition-colors rounded-md hover:bg-gray-100"
+                      >
+                        <span className="flex items-center">
+                          <ScrollText size={16} className="mr-2" />
+                          Ver historial
+                        </span>
+                        <ChevronRight size={16} />
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        {/* Tarjetas de resumen */}
-        <div className="grid grid-cols-1 gap-6 mb-8 md:grid-cols-4">
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold font-montserrat">Presupuestos</h3>
-              <div className="p-2 bg-blue-100 rounded-md">
+        <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="p-4 transition-all bg-white rounded-lg shadow-md hover:shadow-lg">
+            <div className="flex items-center justify-between mb-2">
+              <div className="p-2 bg-blue-100 rounded-lg">
                 <FileText size={20} className="text-blue-600" />
               </div>
+              <span className="text-sm text-green-600">+15%</span>
             </div>
-            <p className="mb-1 text-3xl font-bold">{estadisticas.total}</p>
-            <p className="text-sm text-gray-500">Presupuestos generados</p>
+            <h3 className="text-2xl font-bold">{estadisticas.presupuestos.total}</h3>
+            <p className="text-sm text-gray-600">Presupuestos totales</p>
           </div>
 
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold font-montserrat">Pendientes</h3>
-              <div className="p-2 bg-yellow-100 rounded-md">
-                <BarChart size={20} className="text-yellow-600" />
+          <div className="p-4 transition-all bg-white rounded-lg shadow-md hover:shadow-lg">
+            <div className="flex items-center justify-between mb-2">
+              <div className="p-2 bg-yellow-100 rounded-lg">
+                <Clock size={20} className="text-yellow-600" />
               </div>
             </div>
-            <p className="mb-1 text-3xl font-bold">{estadisticas.pendientes}</p>
-            <p className="text-sm text-gray-500">Esperando aprobación</p>
+            <h3 className="text-2xl font-bold">{estadisticas.presupuestos.pendientes}</h3>
+            <p className="text-sm text-gray-600">Pendientes</p>
           </div>
 
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold font-montserrat">Aprobados</h3>
-              <div className="p-2 bg-green-100 rounded-md">
-                <BarChart size={20} className="text-green-600" />
+          <div className="p-4 transition-all bg-white rounded-lg shadow-md hover:shadow-lg">
+            <div className="flex items-center justify-between mb-2">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <DollarSign size={20} className="text-green-600" />
               </div>
             </div>
-            <p className="mb-1 text-3xl font-bold">{estadisticas.aprobados}</p>
-            <p className="text-sm text-gray-500">Presupuestos aprobados</p>
+            <h3 className="text-2xl font-bold">{estadisticas.estados.total}</h3>
+            <p className="text-sm text-gray-600">Estados de cuenta</p>
           </div>
 
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold font-montserrat">Rechazados</h3>
-              <div className="p-2 bg-red-100 rounded-md">
-                <X size={20} className="text-red-600" />
-              </div>
-            </div>
-            <p className="mb-1 text-3xl font-bold">{estadisticas.rechazados}</p>
-            <p className="text-sm text-gray-500">Presupuestos rechazados</p>
-          </div>
+
         </div>
 
-        {/* Últimos presupuestos */}
-        <div className="p-6 mb-8 bg-white rounded-lg shadow-md">
-          <h3 className="mb-4 text-lg font-bold font-montserrat">Últimos presupuestos</h3>
-          {estadisticas.ultimosPresupuestos.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Número</th>
-                    <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Fecha</th>
-                    <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Cliente</th>
-                    <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Total</th>
-                    <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Estado</th>
-                    <th className="px-4 py-2 text-xs font-medium tracking-wider text-right text-gray-700 uppercase">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {estadisticas.ultimosPresupuestos.map((presupuesto) => (
-                    <tr key={presupuesto.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-2 text-sm font-medium text-gray-900">{presupuesto.numero}</td>
-                      <td className="px-4 py-2 text-sm text-gray-500">
-                        {presupuesto.fechaCreacion ? new Date(presupuesto.fechaCreacion.toDate()).toLocaleDateString() : 'N/A'}
-                      </td>
-                      <td className="px-4 py-2">
-                        <div className="text-sm text-gray-900">{presupuesto.cliente?.nombre}</div>
-                        <div className="text-sm text-gray-500">{presupuesto.cliente?.empresa}</div>
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-500">${presupuesto.total?.toLocaleString()}</td>
-                      <td className="px-4 py-2">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                          ${presupuesto.estado === 'Aprobado' ? 'bg-green-100 text-green-800' :
-                            presupuesto.estado === 'Rechazado' ? 'bg-red-100 text-red-800' :
-                              'bg-yellow-100 text-yellow-800'}`}>
-                          {presupuesto.estado}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2 text-sm font-medium text-right">
-                        <Link
-                          href={`/admin/presupuestos/${presupuesto.id}`}
-                          className="text-primary hover:text-primary-light"
-                        >
-                          Ver
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        {/* Actividad reciente */}
+        <div className="p-6 bg-white rounded-lg shadow-md">
+          <h3 className="mb-4 text-lg font-bold text-gray-800">Actividad Reciente</h3>
+          {estadisticas.estados.ultimos.length > 0 ? (
+            <div className="space-y-3">
+              {estadisticas.estados.ultimos.map(estado => (
+                <div key={estado.id} className="flex items-center justify-between p-3 transition-colors rounded-md hover:bg-gray-50">
+                  <div className="flex items-center">
+                    <div className="p-2 mr-3 bg-green-100 rounded-lg">
+                      <DollarSign size={16} className="text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800">Estado {estado.numero}</p>
+                      <p className="text-sm text-gray-600">{estado.cliente?.nombre}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium text-gray-800">${estado.total?.toLocaleString()}</p>
+                    <p className="text-xs text-gray-500">
+                      {estado.fechaCreacion ? new Date(estado.fechaCreacion.toDate()).toLocaleDateString() : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="py-8 text-center text-gray-500">
-              No hay presupuestos registrados aún.
+              <AlertCircle size={48} className="mx-auto mb-4 text-gray-300" />
+              <p>No hay actividad reciente</p>
             </div>
           )}
         </div>
-
-
       </div>
     </div>
   );
