@@ -88,3 +88,16 @@ body {
 .hover\:bg-secondary-light:hover {
   background-color: var(--secondary-light);
 }
+
+
+.signature-canvas {
+  border: none;
+  display: block;
+}
+
+/* Para mobile */
+@media (max-width: 640px) {
+  .signature-canvas {
+    touch-action: none;
+  }
+}

@@ -153,8 +153,8 @@ export default function Dashboard() {
         nuevo: '/admin/remitos/nuevo',
         historial: '/admin/remitos'
       },
-      activo: false,
-      proximamente: true
+      activo: true,
+      proximamente: false
     },
     {
       id: 'recibos',
@@ -330,8 +330,6 @@ export default function Dashboard() {
             <h3 className="text-2xl font-bold">{estadisticas.estados.total}</h3>
             <p className="text-sm text-gray-600">Estados de cuenta</p>
           </div>
-
-
         </div>
 
         {/* Actividad reciente */}
