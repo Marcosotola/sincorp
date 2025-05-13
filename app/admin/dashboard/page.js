@@ -168,8 +168,8 @@ export default function Dashboard() {
         nuevo: '/admin/recibos/nuevo',
         historial: '/admin/recibos'
       },
-      activo: false,
-      proximamente: true
+      activo: true,
+      proximamente: false
     }
   ];
 

@@ -253,3 +253,74 @@ export const eliminarRemito = async (id) => {
     throw error;
   }
 };
+
+
+// Función para crear un recibo
+export const crearRecibo = async (reciboData) => {
+  try {
+    const docRef = await addDoc(collection(db, 'recibos'), {
+      ...reciboData,
+      fechaCreacion: serverTimestamp()
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error('Error al crear recibo:', error);
+    throw error;
+  }
+};
+
+// Función para obtener todos los recibos
+export const obtenerRecibos = async () => {
+  try {
+    const q = query(collection(db, 'recibos'), orderBy('fechaCreacion', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error al obtener recibos:', error);
+    throw error;
+  }
+};
+
+// Función para obtener un recibo por ID
+export const obtenerReciboPorId = async (id) => {
+  try {
+    const docRef = doc(db, 'recibos', id);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() };
+    } else {
+      throw new Error('Recibo no encontrado');
+    }
+  } catch (error) {
+    console.error('Error al obtener recibo:', error);
+    throw error;
+  }
+};
+
+// Función para actualizar un recibo
+export const actualizarRecibo = async (id, reciboData) => {
+  try {
+    const docRef = doc(db, 'recibos', id);
+    await updateDoc(docRef, {
+      ...reciboData,
+      fechaActualizacion: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error al actualizar recibo:', error);
+    throw error;
+  }
+};
+
+// Función para eliminar un recibo  
+export const eliminarRecibo = async (id) => {
+  try {
+    await deleteDoc(doc(db, 'recibos', id));
+  } catch (error) {
+    console.error('Error al eliminar recibo:', error);
+    throw error;
+  }
+};
