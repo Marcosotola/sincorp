@@ -31,10 +31,11 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [estadisticas, setEstadisticas] = useState({
-    presupuestos: { total: 0, pendientes: 0, aprobados: 0 },
-    estados: { total: 0, ultimos: [] },
-    // Para futuro: remitos, recibos, etc.
+  const [totales, setTotales] = useState({
+    presupuestos: 0,
+    estados: 0,
+    remitos: 0,
+    recibos: 0
   });
   const router = useRouter();
 
@@ -42,7 +43,7 @@ export default function Dashboard() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        await cargarEstadisticas();
+        await cargarTotales();
         setLoading(false);
       } else {
         router.push('/admin');
@@ -52,42 +53,32 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, [router]);
 
-  const cargarEstadisticas = async () => {
+  const cargarTotales = async () => {
     try {
-      // Estadísticas de presupuestos
+      // Total de presupuestos
       const presupuestosRef = collection(db, 'presupuestos');
       const presupuestosSnapshot = await getDocs(presupuestosRef);
-      const presupuestosData = presupuestosSnapshot.docs.map(doc => doc.data());
       
-      const presupuestosPendientes = presupuestosData.filter(p => p.estado === 'Pendiente').length;
-      const presupuestosAprobados = presupuestosData.filter(p => p.estado === 'Aprobado').length;
-
-      // Estadísticas de estados de cuenta
+      // Total de estados
       const estadosRef = collection(db, 'estados');
       const estadosSnapshot = await getDocs(estadosRef);
-      const estadosTotal = estadosSnapshot.size;
 
-      // Últimos estados
-      const ultimosEstadosQuery = query(estadosRef, orderBy('fechaCreacion', 'desc'), limit(3));
-      const ultimosEstadosSnapshot = await getDocs(ultimosEstadosQuery);
-      const ultimosEstados = ultimosEstadosSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      // Total de remitos
+      const remitosRef = collection(db, 'remitos');
+      const remitosSnapshot = await getDocs(remitosRef);
 
-      setEstadisticas({
-        presupuestos: {
-          total: presupuestosSnapshot.size,
-          pendientes: presupuestosPendientes,
-          aprobados: presupuestosAprobados
-        },
-        estados: {
-          total: estadosTotal,
-          ultimos: ultimosEstados
-        }
+      // Total de recibos
+      const recibosRef = collection(db, 'recibos');
+      const recibosSnapshot = await getDocs(recibosRef);
+
+      setTotales({
+        presupuestos: presupuestosSnapshot.size,
+        estados: estadosSnapshot.size,
+        remitos: remitosSnapshot.size,
+        recibos: recibosSnapshot.size
       });
     } catch (error) {
-      console.error('Error al cargar estadísticas:', error);
+      console.error('Error al cargar totales:', error);
     }
   };
 
@@ -111,7 +102,7 @@ export default function Dashboard() {
     );
   }
 
-  // Definir módulos del sistema
+  // Definir módulos del sistema con totales
   const modulos = [
     {
       id: 'presupuestos',
@@ -121,6 +112,7 @@ export default function Dashboard() {
       colorClaro: 'bg-blue-100',
       colorTexto: 'text-blue-600',
       descripcion: 'Crear y gestionar presupuestos',
+      total: totales.presupuestos,
       rutas: {
         nuevo: '/admin/presupuestos/nuevo',
         historial: '/admin/presupuestos'
@@ -135,6 +127,7 @@ export default function Dashboard() {
       colorClaro: 'bg-green-100',
       colorTexto: 'text-green-600',
       descripcion: 'Control de estados de cuenta',
+      total: totales.estados,
       rutas: {
         nuevo: '/admin/estados/nuevo',
         historial: '/admin/estados'
@@ -149,6 +142,7 @@ export default function Dashboard() {
       colorClaro: 'bg-purple-100',
       colorTexto: 'text-purple-600',
       descripcion: 'Gestión de remitos',
+      total: totales.remitos,
       rutas: {
         nuevo: '/admin/remitos/nuevo',
         historial: '/admin/remitos'
@@ -164,6 +158,7 @@ export default function Dashboard() {
       colorClaro: 'bg-orange-100',
       colorTexto: 'text-orange-600',
       descripcion: 'Administrar recibos',
+      total: totales.recibos,
       rutas: {
         nuevo: '/admin/recibos/nuevo',
         historial: '/admin/recibos'
@@ -239,9 +234,6 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Stats Cards */}
-        
-
         {/* Módulos del sistema */}
         <h3 className="mb-4 text-xl font-bold text-gray-800">Documentos</h3>
         <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -266,6 +258,10 @@ export default function Dashboard() {
                   <Icono size={32} />
                   <h4 className="mt-4 text-lg font-bold">{modulo.titulo}</h4>
                   <p className="text-sm opacity-90">{modulo.descripcion}</p>
+                  <div className="mt-4">
+                    <p className="text-2xl font-bold">{modulo.total}</p>
+                    <p className="text-xs opacity-75">Total registrados</p>
+                  </div>
                 </div>
                 
                 {modulo.activo && (
@@ -297,72 +293,6 @@ export default function Dashboard() {
               </div>
             );
           })}
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="p-4 transition-all bg-white rounded-lg shadow-md hover:shadow-lg">
-            <div className="flex items-center justify-between mb-2">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FileText size={20} className="text-blue-600" />
-              </div>
-              <span className="text-sm text-green-600">+15%</span>
-            </div>
-            <h3 className="text-2xl font-bold">{estadisticas.presupuestos.total}</h3>
-            <p className="text-sm text-gray-600">Presupuestos totales</p>
-          </div>
-
-          <div className="p-4 transition-all bg-white rounded-lg shadow-md hover:shadow-lg">
-            <div className="flex items-center justify-between mb-2">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <Clock size={20} className="text-yellow-600" />
-              </div>
-            </div>
-            <h3 className="text-2xl font-bold">{estadisticas.presupuestos.pendientes}</h3>
-            <p className="text-sm text-gray-600">Pendientes</p>
-          </div>
-
-          <div className="p-4 transition-all bg-white rounded-lg shadow-md hover:shadow-lg">
-            <div className="flex items-center justify-between mb-2">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <DollarSign size={20} className="text-green-600" />
-              </div>
-            </div>
-            <h3 className="text-2xl font-bold">{estadisticas.estados.total}</h3>
-            <p className="text-sm text-gray-600">Estados de cuenta</p>
-          </div>
-        </div>
-
-        {/* Actividad reciente */}
-        <div className="p-6 bg-white rounded-lg shadow-md">
-          <h3 className="mb-4 text-lg font-bold text-gray-800">Actividad Reciente</h3>
-          {estadisticas.estados.ultimos.length > 0 ? (
-            <div className="space-y-3">
-              {estadisticas.estados.ultimos.map(estado => (
-                <div key={estado.id} className="flex items-center justify-between p-3 transition-colors rounded-md hover:bg-gray-50">
-                  <div className="flex items-center">
-                    <div className="p-2 mr-3 bg-green-100 rounded-lg">
-                      <DollarSign size={16} className="text-green-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-800">Estado {estado.numero}</p>
-                      <p className="text-sm text-gray-600">{estado.cliente?.nombre}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium text-gray-800">${estado.total?.toLocaleString()}</p>
-                    <p className="text-xs text-gray-500">
-                      {estado.fechaCreacion ? new Date(estado.fechaCreacion.toDate()).toLocaleDateString() : 'N/A'}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="py-8 text-center text-gray-500">
-              <AlertCircle size={48} className="mx-auto mb-4 text-gray-300" />
-              <p>No hay actividad reciente</p>
-            </div>
-          )}
         </div>
       </div>
     </div>
