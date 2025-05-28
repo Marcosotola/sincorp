@@ -7,10 +7,10 @@ import Link from 'next/link';
 import { Home, LogOut, Edit, ArrowLeft, Download, Trash } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
-import { auth, db } from '../../../lib/firebase';
+import { auth, db } from '../../lib/firebase';
 import { use } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
-import ReciboPDF from '../../../components/pdf/ReciboPDF';
+import ReciboPDF from '../../components/pdf/ReciboPDF';
 
 export default function VerRecibo({ params }) {
   // Usar React.use para manejar params como una promesa
