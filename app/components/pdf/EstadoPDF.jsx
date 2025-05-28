@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
 
@@ -77,14 +75,26 @@ const styles = StyleSheet.create({
     borderBottomColor: '#eee',
     paddingVertical: 5,
   },
+  col6: {
+    flex: 6,
+  },
+  col5: {
+    flex: 5,
+  },
   col4: {
     flex: 4,
   },
   col3: {
     flex: 3,
   },
+  col25: {
+    flex: 2.5,
+  },
   col2: {
     flex: 2,
+  },
+  col15: {
+    flex: 1.5,
   },
   col1: {
     flex: 1,
@@ -95,6 +105,11 @@ const styles = StyleSheet.create({
   },
   colContent: {
     fontSize: 9,
+    paddingRight: 12,
+  },
+  conceptoContent: {
+    fontSize: 9,
+    paddingRight: 25,
   },
   infoBlock: {
     backgroundColor: '#f9f9f9',
@@ -120,7 +135,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1A5276',
     color: '#fff',
     paddingVertical: 8,
-    paddingHorizontal: 5,
+    paddingHorizontal: 8,
     fontSize: 10,
     fontWeight: 'bold',
     flexDirection: 'row',
@@ -130,7 +145,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
     paddingVertical: 6,
-    paddingHorizontal: 5,
+    paddingHorizontal: 8,
     fontSize: 9,
   },
   oddRow: {
@@ -268,7 +283,7 @@ const EstadoPDF = ({ estado }) => {
         <View style={styles.horizontalInfoBlocks}>
           {/* Información del presupuesto */}
           <View style={[styles.infoBlock, { flex: 1, marginRight: 10 }]}>
-            <Text style={styles.sectionTitle}>Detalles del Estado</Text>
+            <Text style={styles.sectionTitle}>Datos</Text>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Número:</Text>
               <Text style={styles.value}>{estado.numero || ''}</Text>
@@ -303,19 +318,21 @@ const EstadoPDF = ({ estado }) => {
 
         {/* Tabla de items */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Detalle de Items</Text>
+          <Text style={styles.sectionTitle}>Reporte de avances</Text>
           
           <View style={styles.tableHeader}>
-            <Text style={[styles.col1, styles.colHeader]}>Fecha</Text>
-            <Text style={[styles.col4, styles.colHeader]}>Descripción</Text>
-            <Text style={[styles.col2, styles.colHeader]}>Precio</Text>
+            <Text style={[styles.col15, styles.colHeader]}>Fecha</Text>
+            <Text style={[styles.col4, styles.colHeader]}>Concepto</Text>
+            <Text style={[styles.col25, styles.colHeader]}>Monto</Text>
+            <Text style={[styles.col4, styles.colHeader]}>Comentarios</Text>
           </View>
           
           {(estado.items || []).map((item, index) => (
             <View key={item.id} style={[styles.tableRow, index % 2 === 1 ? styles.oddRow : {}]}>
-              <Text style={[styles.col1, styles.colContent]}>{formatDate(item.fecha)}</Text>
-              <Text style={[styles.col4, styles.colContent]}>{item.descripcion || ''}</Text>
-              <Text style={[styles.col2, styles.colContent]}>$ {formatearMonto(parseFloat(item.precio || 0))}</Text>
+              <Text style={[styles.col15, styles.colContent]}>{formatDate(item.fecha)}</Text>
+              <Text style={[styles.col4, styles.conceptoContent]}>{item.descripcion || ''}</Text>
+              <Text style={[styles.col25, styles.colContent]}>$ {formatearMonto(parseFloat(item.precio || 0))}</Text>
+              <Text style={[styles.col4, styles.colContent]}>{item.comentarios || ''}</Text>
             </View>
           ))}
 

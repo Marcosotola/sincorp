@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Home, LogOut, Edit, ArrowLeft, Download } from 'lucide-react';
+import { Home, LogOut, Edit, ArrowLeft, Download, Printer } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
 import { obtenerEstadoPorId } from '../../../lib/firestore';
@@ -20,6 +20,22 @@ const formatMoney = (amount) => {
     const parts = formatted.split(',');
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     return '$' + parts.join(',');
+};
+
+// Función para formatear fechas
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  } catch (e) {
+    return dateString;
+  }
 };
 
 export default function VerEstado({ params }) {
@@ -67,6 +83,10 @@ export default function VerEstado({ params }) {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -80,8 +100,8 @@ export default function VerEstado({ params }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header del administrador */}
-      <header className="text-white shadow bg-primary">
+      {/* Header del administrador - Solo visible en pantalla */}
+      <header className="text-white shadow bg-primary print:hidden">
         <div className="container flex items-center justify-between px-4 py-20 mx-auto">
           <div className="flex items-center">
             <div className="relative mr-2">
@@ -102,7 +122,8 @@ export default function VerEstado({ params }) {
         </div>
       </header>
 
-      <div className="container px-4 py-8 mx-auto">
+      {/* Navegación y acciones - Solo visible en pantalla */}
+      <div className="container px-4 py-8 mx-auto print:hidden">
         <div className="flex flex-wrap items-center justify-between mb-8">
           <div className="flex items-center mb-4">
             <Link
@@ -119,7 +140,7 @@ export default function VerEstado({ params }) {
               Estados
             </Link>
             <span className="mx-2 text-gray-500">/</span>
-            <span className="text-gray-700">Detalles del Estado</span>
+            <span className="text-gray-700">Vista Previa</span>
           </div>
 
           <div className="flex mb-4 space-x-2">
@@ -135,6 +156,7 @@ export default function VerEstado({ params }) {
             >
               <Edit size={18} className="mr-2" /> Editar
             </Link>
+
             <PDFDownloadLink
               document={<EstadoPDF estado={estado} />}
               fileName={`${estado.numero}.pdf`}
@@ -148,100 +170,161 @@ export default function VerEstado({ params }) {
             </PDFDownloadLink>
           </div>
         </div>
+      </div>
 
-        <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
-          Estado de Cuenta {estado.numero}
-        </h2>
+      {/* Documento estilo PDF */}
+      <div className="container mx-auto print:container-none print:mx-0 print:max-w-none">
+        <div className="max-w-4xl mx-auto bg-white shadow-lg print:shadow-none print:max-w-none print:mx-0">
+          
+          {/* Encabezado de la empresa */}
+          <div className="flex items-center justify-between p-8 border-b-4 border-blue-800">
+            <div className="flex items-center">
+              {/* Logo placeholder */}
+              <div className="w-12 mr-4 bg-blue-800 rounded h-14"></div>
+              <div>
+                <h1 className="text-3xl font-bold">
+                  <span className="text-blue-800">Sin</span>
+                  <span className="text-blue-500">corp</span>
+                </h1>
+                <p className="text-sm text-gray-600">Servicios Integrales</p>
+              </div>
+            </div>
+            <div className="text-sm text-right text-gray-700">
+              <p>Email: sincorpserviciosintegrales@gmail.com</p>
+              <p>Teléfono: (351) 681 0777</p>
+              <p>Web: www.sincorp.vercel.app</p>
+            </div>
+          </div>
 
-        {/* Contenido principal */}
-        <div className="grid grid-cols-1 gap-6 mb-6 md:grid-cols-2">
-          {/* Información del estado */}
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Estado</h3>
-            <div className="space-y-2">
-              <div className="grid grid-cols-3 pb-2 border-b">
-                <span className="font-medium text-gray-600">Número:</span>
-                <span className="col-span-2">{estado.numero}</span>
+          {/* Título del documento */}
+          <div className="py-6 text-center">
+            <h2 className="text-2xl font-bold text-blue-800">ESTADO DE CUENTA</h2>
+          </div>
+
+          {/* Información principal en dos columnas */}
+          <div className="grid grid-cols-1 gap-6 px-8 mb-6 md:grid-cols-2">
+            {/* Datos del estado */}
+            <div className="p-4 rounded-lg bg-gray-50">
+              <h3 className="pb-2 mb-3 text-lg font-semibold text-blue-800 border-b border-gray-300">Datos</h3>
+              <div className="space-y-2">
+                <div className="flex">
+                  <span className="w-20 font-medium text-gray-700">Número:</span>
+                  <span className="text-gray-900">{estado.numero}</span>
+                </div>
+                <div className="flex">
+                  <span className="w-20 font-medium text-gray-700">Fecha:</span>
+                  <span className="text-gray-900">{formatDate(estado.fecha)}</span>
+                </div>
               </div>
-              <div className="grid grid-cols-3 pb-2 border-b">
-                <span className="font-medium text-gray-600">Fecha:</span>
-                <span className="col-span-2">{new Date(estado.fecha).toLocaleDateString()}</span>
-              </div>
-              <div className="grid grid-cols-3 pb-2 border-b">
-                <span className="font-medium text-gray-600">Creado por:</span>
-                <span className="col-span-2">{estado.usuarioCreador || 'No disponible'}</span>
+            </div>
+
+            {/* Información del cliente */}
+            <div className="p-4 rounded-lg bg-gray-50">
+              <h3 className="pb-2 mb-3 text-lg font-semibold text-blue-800 border-b border-gray-300">Cliente</h3>
+              <div className="space-y-2">
+                <div className="flex">
+                  <span className="w-20 font-medium text-gray-700">Nombre:</span>
+                  <span className="text-gray-900">{estado.cliente.nombre || ''}</span>
+                </div>
+                <div className="flex">
+                  <span className="w-20 font-medium text-gray-700">Empresa:</span>
+                  <span className="text-gray-900">{estado.cliente.empresa || ''}</span>
+                </div>
+                <div className="flex">
+                  <span className="w-20 font-medium text-gray-700">Email:</span>
+                  <span className="text-gray-900">{estado.cliente.email || ''}</span>
+                </div>
+                <div className="flex">
+                  <span className="w-20 font-medium text-gray-700">Tel:</span>
+                  <span className="text-gray-900">{estado.cliente.telefono || ''}</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Información del cliente */}
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="mb-4 text-lg font-semibold text-gray-700">Información del Cliente</h3>
-            <div className="space-y-2">
-              <div className="grid grid-cols-3 pb-2 border-b">
-                <span className="font-medium text-gray-600">Nombre:</span>
-                <span className="col-span-2">{estado.cliente.nombre}</span>
-              </div>
-              <div className="grid grid-cols-3 pb-2 border-b">
-                <span className="font-medium text-gray-600">Empresa:</span>
-                <span className="col-span-2">{estado.cliente.empresa}</span>
-              </div>
-              <div className="grid grid-cols-3 pb-2 border-b">
-                <span className="font-medium text-gray-600">Email:</span>
-                <span className="col-span-2">{estado.cliente.email}</span>
-              </div>
-              <div className="grid grid-cols-3 pb-2 border-b">
-                <span className="font-medium text-gray-600">Teléfono:</span>
-                <span className="col-span-2">{estado.cliente.telefono}</span>
-              </div>
-              <div className="grid grid-cols-3 pb-2 border-b">
-                <span className="font-medium text-gray-600">Dirección:</span>
-                <span className="col-span-2">{estado.cliente.direccion}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Items del estado */}
-        <div className="p-6 mb-6 bg-white rounded-lg shadow-md">
-          <h3 className="mb-4 text-lg font-semibold text-gray-700">Detalle del Estado de Cuenta</h3>
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="w-32 px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Fecha</th>
-                  <th className="px-4 py-2 text-xs font-medium tracking-wider text-left text-gray-700 uppercase">Descripción</th>
-                  <th className="w-32 px-4 py-2 text-xs font-medium tracking-wider text-right text-gray-700 uppercase">Precio</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {estado.items.map((item, index) => (
-                  <tr key={item.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                    <td className="px-4 py-2 text-sm text-gray-700">
-                      {new Date(item.fecha).toLocaleDateString('es-AR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric'
-                      })}
-                    </td>
-                    <td className="px-4 py-2 text-sm text-gray-700">{item.descripcion}</td>
-                    <td className="px-4 py-2 text-sm font-medium text-right text-gray-900">
-                      {formatMoney(parseFloat(item.precio || 0))}
-                    </td>
+          {/* Tabla de items */}
+          <div className="px-8 mb-8">
+            <h3 className="pb-2 mb-4 text-lg font-semibold text-blue-800 border-b border-gray-300">Reporte de avances</h3>
+            
+            <div className="overflow-x-auto">
+              <table className="min-w-full border border-gray-300">
+                <thead>
+                  <tr className="text-white bg-blue-800">
+                    <th className="px-4 py-3 text-xs font-medium tracking-wider text-left uppercase border-r border-blue-600">Fecha</th>
+                    <th className="px-4 py-3 text-xs font-medium tracking-wider text-left uppercase border-r border-blue-600">Concepto</th>
+                    <th className="px-4 py-3 text-xs font-medium tracking-wider text-left uppercase border-r border-blue-600">Monto</th>
+                    <th className="px-4 py-3 text-xs font-medium tracking-wider text-left uppercase">Comentarios</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {(estado.items || []).map((item, index) => (
+                    <tr key={item.id} className={index % 2 === 1 ? 'bg-gray-50' : 'bg-white'}>
+                      <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-300">
+                        {formatDate(item.fecha)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-300">
+                        {item.descripcion || ''}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-300">
+                        $ {formatMoney(parseFloat(item.precio || 0)).replace('$', '')}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        {item.comentarios || ''}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Total */}
+            <div className="flex justify-end mt-6">
+              <div className="w-64">
+                <div className="flex items-center justify-between py-3 border-t-2 border-blue-800">
+                  <span className="text-lg font-bold text-blue-800">SALDO:</span>
+                  <span className="text-lg font-bold text-blue-800">$ {formatMoney(estado.total).replace('$', '')}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="w-full mt-6 ml-auto md:w-64">
-            <div className="flex justify-between py-2 text-lg font-bold border-t border-b border-gray-200">
-              <span>Saldo: </span>
-              <span>{formatMoney(estado.total)}</span>
-            </div>
+          {/* Pie de página */}
+          <div className="px-8 py-6 text-sm text-center text-gray-600 border-t-2 border-blue-800">
+            <p className="font-medium">SINCORP Servicios Integrales - CUIT: 20-24471842-7</p>
+            <p>Av. Luciano Torrent 4800, 5000 - Cordoba - Tel: (351) 681 0777 - www.sincorp.vercel.app</p>
           </div>
         </div>
       </div>
+
+      {/* Estilos para impresión */}
+      <style jsx global>{`
+        @media print {
+          @page {
+            margin: 0.5in;
+            size: A4;
+          }
+          body {
+            background: white !important;
+            color: black !important;
+          }
+          .print\\:hidden {
+            display: none !important;
+          }
+          .print\\:container-none {
+            container: none !important;
+          }
+          .print\\:mx-0 {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+          }
+          .print\\:max-w-none {
+            max-width: none !important;
+          }
+          .print\\:shadow-none {
+            box-shadow: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
