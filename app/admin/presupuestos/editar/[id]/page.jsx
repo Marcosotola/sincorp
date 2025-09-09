@@ -4,11 +4,28 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Home, LogOut, Save, Download, Eye, PlusCircle, Trash2 } from 'lucide-react';
+import { Home, LogOut, Save, Download, Eye, PlusCircle, Trash2, Percent, DollarSign } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../../../../lib/firebase';
 import { obtenerPresupuestoPorId, actualizarPresupuesto } from '../../../../lib/firestore';
 import { use } from 'react';
+
+// Función para formatear montos con separador de miles (punto) y decimal (coma)
+const formatMoney = (amount) => {
+    if (amount === undefined || amount === null) return '$0,00';
+
+    // Convertir a número si es string
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+
+    // Formatear con 2 decimales y reemplazar punto por coma para decimales
+    const formatted = num.toFixed(2).replace('.', ',');
+
+    // Agregar separadores de miles (puntos)
+    const parts = formatted.split(',');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    return '$' + parts.join(',');
+};
 
 export default function EditarPresupuesto({ params }) {
   // Usar React.use para manejar params como una promesa
@@ -46,6 +63,10 @@ export default function EditarPresupuesto({ params }) {
     ],
     notas: '',
     subtotal: 0,
+    // Campos de descuento (valores por defecto para compatibilidad)
+    tipoDescuento: 'ninguno',
+    valorDescuento: 0,
+    montoDescuento: 0,
     total: 0
   });
 
@@ -62,7 +83,7 @@ export default function EditarPresupuesto({ params }) {
           const presupuestoData = await obtenerPresupuestoPorId(id);
           setPresupuestoOriginal(presupuestoData);
           
-          // Actualizar estado con los datos cargados
+          // Actualizar estado con los datos cargados, incluyendo valores por defecto para descuentos si no existen
           setPresupuesto({
             numero: presupuestoData.numero,
             fecha: presupuestoData.fecha,
@@ -70,6 +91,9 @@ export default function EditarPresupuesto({ params }) {
             items: presupuestoData.items || [],
             notas: presupuestoData.notas,
             subtotal: presupuestoData.subtotal,
+            tipoDescuento: presupuestoData.tipoDescuento || 'ninguno',
+            valorDescuento: presupuestoData.valorDescuento || 0,
+            montoDescuento: presupuestoData.montoDescuento || 0,
             total: presupuestoData.total
           });
           
@@ -88,6 +112,25 @@ export default function EditarPresupuesto({ params }) {
     return () => unsubscribe();
   }, [id, router]);
 
+  // Función para calcular totales incluyendo descuentos
+  const calcularTotales = (items, tipoDescuento, valorDescuento) => {
+    const subtotal = items.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+    let montoDescuento = 0;
+    let total = subtotal;
+
+    if (tipoDescuento === 'porcentaje' && valorDescuento > 0) {
+      montoDescuento = (subtotal * valorDescuento) / 100;
+    } else if (tipoDescuento === 'monto' && valorDescuento > 0) {
+      montoDescuento = valorDescuento;
+    }
+
+    // Asegurar que el descuento no sea mayor al subtotal
+    montoDescuento = Math.min(montoDescuento, subtotal);
+    total = subtotal - montoDescuento;
+
+    return { subtotal, montoDescuento, total };
+  };
+
   // Función para abrir el modal de descripción
   const abrirModalDescripcion = (itemId, descripcion) => {
     setModalDescripcion({
@@ -105,11 +148,6 @@ export default function EditarPresupuesto({ params }) {
       itemId: null,
       value: ''
     });
-  };
-
-  // Función para verificar si es móvil
-  const isMobile = () => {
-    return typeof window !== 'undefined' && window.innerWidth < 768;
   };
 
   const handleLogout = async () => {
@@ -131,31 +169,62 @@ export default function EditarPresupuesto({ params }) {
       if (item.id === id) {
         const updatedItem = {...item, [field]: value};
         if (field === 'cantidad' || field === 'precioUnitario') {
-          updatedItem.subtotal = parseFloat(updatedItem.cantidad || 0) * parseFloat(updatedItem.precioUnitario || 0);
+          const cantidad = parseFloat(updatedItem.cantidad) || 0;
+          const precio = parseFloat(updatedItem.precioUnitario) || 0;
+          updatedItem.subtotal = cantidad * precio;
         }
         return updatedItem;
       }
       return item;
     });
     
-    const subtotal = updatedItems.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+    const totales = calcularTotales(updatedItems, presupuesto.tipoDescuento, presupuesto.valorDescuento);
     
     setPresupuesto({
       ...presupuesto,
       items: updatedItems,
-      subtotal: subtotal,
-      total: subtotal
+      ...totales
+    });
+  };
+
+  // Función para manejar cambios en descuentos
+  const handleDescuentoChange = (tipo, valor) => {
+    // Manejar valores vacíos o inválidos
+    let valorNumerico = 0;
+    if (valor !== '' && valor !== null && valor !== undefined) {
+      const parsed = parseFloat(valor);
+      valorNumerico = isNaN(parsed) ? 0 : parsed;
+    }
+    
+    // Validaciones
+    if (tipo === 'porcentaje' && valorNumerico > 100) {
+      alert('El porcentaje de descuento no puede ser mayor a 100%');
+      return;
+    }
+
+    const totales = calcularTotales(presupuesto.items, tipo, valorNumerico);
+
+    setPresupuesto({
+      ...presupuesto,
+      tipoDescuento: tipo,
+      valorDescuento: valorNumerico,
+      ...totales
     });
   };
 
   const addItem = () => {
     const newId = Math.max(...presupuesto.items.map(item => item.id), 0) + 1;
+    const newItems = [
+      ...presupuesto.items,
+      { id: newId, descripcion: '', cantidad: 1, precioUnitario: 0, subtotal: 0 }
+    ];
+
+    const totales = calcularTotales(newItems, presupuesto.tipoDescuento, presupuesto.valorDescuento);
+    
     setPresupuesto({
       ...presupuesto,
-      items: [
-        ...presupuesto.items,
-        { id: newId, descripcion: '', cantidad: 1, precioUnitario: 0, subtotal: 0 }
-      ]
+      items: newItems,
+      ...totales
     });
   };
 
@@ -163,13 +232,12 @@ export default function EditarPresupuesto({ params }) {
     if (presupuesto.items.length === 1) return;
     
     const updatedItems = presupuesto.items.filter(item => item.id !== id);
-    const subtotal = updatedItems.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+    const totales = calcularTotales(updatedItems, presupuesto.tipoDescuento, presupuesto.valorDescuento);
     
     setPresupuesto({
       ...presupuesto,
       items: updatedItems,
-      subtotal: subtotal,
-      total: subtotal
+      ...totales
     });
   };
 
@@ -185,6 +253,9 @@ export default function EditarPresupuesto({ params }) {
         items: presupuesto.items,
         notas: presupuesto.notas,
         subtotal: presupuesto.subtotal,
+        tipoDescuento: presupuesto.tipoDescuento,
+        valorDescuento: presupuesto.valorDescuento,
+        montoDescuento: presupuesto.montoDescuento,
         total: presupuesto.total,
         estado: presupuestoOriginal.estado || 'Pendiente',
       };
@@ -406,14 +477,14 @@ export default function EditarPresupuesto({ params }) {
                           )}
                         </div>
                         
-                        {/* Vista desktop - Input normal */}
+                        {/* Vista desktop - Textarea normal */}
                         <div className="hidden md:block">
-                          <input 
-                            type="text" 
+                          <textarea 
                             value={item.descripcion} 
                             onChange={(e) => handleItemChange(item.id, 'descripcion', e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 rounded-md"
+                            className="w-full px-2 py-1 border border-gray-300 rounded-md min-h-[100px] resize-y"
                             placeholder="Descripción del servicio"
+                            rows={5}
                           />
                         </div>
                       </td>
@@ -437,7 +508,7 @@ export default function EditarPresupuesto({ params }) {
                         />
                       </td>
                       <td className="px-4 py-2 font-medium text-gray-700">
-                        ${item.subtotal ? item.subtotal.toFixed(2) : '0.00'}
+                        {formatMoney(item.subtotal)}
                       </td>
                       <td className="px-4 py-2">
                         <button 
@@ -462,15 +533,92 @@ export default function EditarPresupuesto({ params }) {
                 <PlusCircle size={18} className="mr-1" /> Agregar ítem
               </button>
             </div>
-            
-            <div className="w-full mt-6 ml-auto md:w-64">
-              <div className="flex justify-between py-2 border-t border-gray-200">
-                <span className="text-gray-700">Subtotal:</span>
-                <span className="font-medium">${presupuesto.subtotal.toFixed(2)}</span>
+
+            {/* Sección de Descuentos */}
+            <div className="p-4 mt-6 border rounded-lg bg-gray-50">
+              <h4 className="flex items-center mb-3 font-semibold text-gray-700 text-md">
+                <Percent size={16} className="mr-2" />
+                Descuentos
+              </h4>
+              
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                {/* Tipo de descuento */}
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-gray-700">Tipo de descuento</label>
+                  <select
+                    value={presupuesto.tipoDescuento}
+                    onChange={(e) => handleDescuentoChange(e.target.value, presupuesto.valorDescuento)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="ninguno">Sin descuento</option>
+                    <option value="porcentaje">Porcentaje (%)</option>
+                    <option value="monto">Monto fijo ($)</option>
+                  </select>
+                </div>
+
+                {/* Valor del descuento */}
+                {presupuesto.tipoDescuento !== 'ninguno' && (
+                  <div>
+                    <label className="block mb-1 text-sm font-medium text-gray-700">
+                      {presupuesto.tipoDescuento === 'porcentaje' ? 'Porcentaje (%)' : 'Monto ($)'}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={presupuesto.valorDescuento}
+                        onChange={(e) => handleDescuentoChange(presupuesto.tipoDescuento, e.target.value)}
+                        className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md"
+                        placeholder="0"
+                        min="0"
+                        max={presupuesto.tipoDescuento === 'porcentaje' ? '100' : undefined}
+                        step={presupuesto.tipoDescuento === 'porcentaje' ? '1' : '0.01'}
+                      />
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        {presupuesto.tipoDescuento === 'porcentaje' ? 
+                          <Percent size={16} className="text-gray-400" /> : 
+                          <DollarSign size={16} className="text-gray-400" />
+                        }
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Mostrar monto del descuento */}
+                {presupuesto.tipoDescuento !== 'ninguno' && presupuesto.montoDescuento > 0 && (
+                  <div>
+                    <label className="block mb-1 text-sm font-medium text-gray-700">Descuento aplicado</label>
+                    <div className="px-3 py-2 font-medium text-red-700 border border-red-200 rounded-md bg-red-50">
+                      -{formatMoney(presupuesto.montoDescuento)}
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex justify-between py-2 text-lg font-bold border-t border-b border-gray-200">
-                <span>Total:</span>
-                <span>${presupuesto.total.toFixed(2)}</span>
+            </div>
+            
+            {/* Totales mejorados */}
+            <div className="w-full mt-6 ml-auto md:w-80">
+              <div className="space-y-2">
+                <div className="flex justify-between py-2 text-sm border-t border-gray-200">
+                  <span className="text-gray-700">Subtotal:</span>
+                  <span className="font-medium">{formatMoney(presupuesto.subtotal)}</span>
+                </div>
+                
+                {presupuesto.montoDescuento > 0 && (
+                  <div className="flex justify-between py-2 text-sm text-red-600">
+                    <span>
+                      Descuento {presupuesto.tipoDescuento === 'porcentaje' ? 
+                        `(${presupuesto.valorDescuento}%)` : 
+                        '(monto fijo)'
+                      }:
+                    </span>
+                    <span className="font-medium">-{formatMoney(presupuesto.montoDescuento)}</span>
+                  </div>
+                )}
+                
+                <div className="flex justify-between py-3 text-lg font-bold border-t border-b border-gray-800 text-primary">
+                  <span>TOTAL:</span>
+                  <span>{formatMoney(presupuesto.total)}</span>
+                </div>
               </div>
             </div>
           </div>

@@ -344,13 +344,27 @@ export default function VerPresupuesto({ params }) {
               </div>
             ))}
 
-            {/* Totales */}
+            {/* Totales con descuentos */}
             <div className="flex justify-end mt-4">
               <div className="w-80">
                 <div className="flex justify-between py-2 text-xs border-t border-gray-200">
                   <span>Subtotal:</span>
                   <span className="font-medium">$ {formatearMonto(parseFloat(presupuesto.subtotal || 0))}</span>
                 </div>
+                
+                {/* Mostrar descuento si existe */}
+                {presupuesto.montoDescuento && presupuesto.montoDescuento > 0 && (
+                  <div className="flex justify-between py-2 text-xs text-red-600">
+                    <span>
+                      Descuento {presupuesto.tipoDescuento === 'porcentaje' ? 
+                        `(${presupuesto.valorDescuento}%)` : 
+                        '(monto fijo)'
+                      }:
+                    </span>
+                    <span className="font-medium">-$ {formatearMonto(parseFloat(presupuesto.montoDescuento))}</span>
+                  </div>
+                )}
+                
                 <div className="flex justify-between py-3 text-sm font-bold text-blue-800 border-t border-gray-800">
                   <span>TOTAL:</span>
                   <span>$ {formatearMonto(parseFloat(presupuesto.total || 0))}</span>
