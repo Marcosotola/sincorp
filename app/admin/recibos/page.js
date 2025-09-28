@@ -1,40 +1,73 @@
-// app/admin/recibos/[id]/page.jsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Home, LogOut, Edit, ArrowLeft, Download, Trash } from 'lucide-react';
+import { FilePlus, FileText, Home, LogOut, Search, Download, Edit, Trash, Eye } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
-import { use } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import ReciboPDF from '../../components/pdf/ReciboPDF';
 
-export default function VerRecibo({ params }) {
-  // Usar React.use para manejar params como una promesa
-  const resolvedParams = use(params);
-  const id = resolvedParams.id;
-
-  const router = useRouter();
+export default function HistorialRecibos() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [recibo, setRecibo] = useState(null);
+  const [recibos, setRecibos] = useState([]);
+  const [filtro, setFiltro] = useState('');
+  const router = useRouter();
 
-  // Función para formatear fechas
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        await cargarRecibos();
+        setLoading(false);
+      } else {
+        router.push('/admin');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  const cargarRecibos = async () => {
     try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (e) {
-      return dateString;
+      const recibosRef = collection(db, 'recibos');
+      const q = query(recibosRef, orderBy('fechaCreacion', 'desc'));
+      const querySnapshot = await getDocs(q);
+
+      const recibosData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      console.log("recibos cargados:", recibosData.length);
+      setRecibos(recibosData);
+    } catch (error) {
+      console.error('Error al cargar recibos:', error);
+      setRecibos([]);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/admin');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  };
+
+  const handleDeleteRecibo = async (id) => {
+    if (confirm('¿Está seguro de que desea eliminar este recibo?')) {
+      try {
+        await deleteDoc(doc(db, 'recibos', id));
+        setRecibos(recibos.filter(r => r.id !== id));
+      } catch (error) {
+        console.error('Error al eliminar recibo:', error);
+        alert('Error al eliminar el recibo. Inténtelo de nuevo más tarde.');
+      }
     }
   };
 
@@ -47,60 +80,16 @@ export default function VerRecibo({ params }) {
     }).format(amount || 0);
   };
 
-  useEffect(() => {
-    if (!id) return;
+  const recibosFiltrados = recibos.filter((recibo) => {
+    if (!filtro) return true;
 
-    // Verificar autenticación y cargar recibo
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-
-        try {
-          // Cargar datos del recibo
-          const reciboDoc = doc(db, 'recibos', id);
-          const reciboSnapshot = await getDoc(reciboDoc);
-          
-          if (reciboSnapshot.exists()) {
-            setRecibo({ id: reciboSnapshot.id, ...reciboSnapshot.data() });
-          } else {
-            alert('Recibo no encontrado.');
-            router.push('/admin/recibos');
-          }
-          setLoading(false);
-        } catch (error) {
-          console.error('Error al cargar recibo:', error);
-          alert('Error al cargar los datos del recibo.');
-          router.push('/admin/recibos');
-        }
-      } else {
-        router.push('/admin');
-      }
-    });
-
-    return () => unsubscribe();
-  }, [id, router]);
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.push('/admin');
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-    }
-  };
-
-  const handleDeleteRecibo = async () => {
-    if (confirm('¿Está seguro de que desea eliminar este recibo?')) {
-      try {
-        await deleteDoc(doc(db, 'recibos', id));
-        alert('Recibo eliminado exitosamente.');
-        router.push('/admin/recibos');
-      } catch (error) {
-        console.error('Error al eliminar recibo:', error);
-        alert('Error al eliminar el recibo.');
-      }
-    }
-  };
+    const terminoBusqueda = filtro.toLowerCase();
+    return (
+      recibo.numero?.toLowerCase().includes(terminoBusqueda) ||
+      recibo.recibiDe?.toLowerCase().includes(terminoBusqueda) ||
+      recibo.concepto?.toLowerCase().includes(terminoBusqueda)
+    );
+  });
 
   if (loading) {
     return (
@@ -137,177 +126,151 @@ export default function VerRecibo({ params }) {
         </div>
       </header>
 
-      {/* Navegación y controles */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="container px-4 py-4 mx-auto">
-          <div className="flex flex-wrap items-center justify-between">
-            <div className="flex items-center mb-2 md:mb-0">
-              <Link
-                href="/admin/dashboard"
-                className="flex items-center mr-4 text-primary hover:underline"
-              >
-                <Home size={16} className="mr-1" /> Dashboard
-              </Link>
-              <span className="mx-2 text-gray-500">/</span>
-              <Link
-                href="/admin/recibos"
-                className="flex items-center mr-4 text-primary hover:underline"
-              >
-                Recibos
-              </Link>
-              <span className="mx-2 text-gray-500">/</span>
-              <span className="text-gray-700">Detalles</span>
-            </div>
-
-            <div className="flex space-x-2">
-              <Link
-                href="/admin/recibos"
-                className="flex items-center px-4 py-2 text-gray-700 transition-colors bg-gray-200 rounded-md hover:bg-gray-300"
-              >
-                <ArrowLeft size={18} className="mr-2" /> Volver
-              </Link>
-              <Link
-                href={`/admin/recibos/editar/${id}`}
-                className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
-              >
-                <Edit size={18} className="mr-2" /> Editar
-              </Link>
-              <button
-                onClick={handleDeleteRecibo}
-                className="flex items-center px-4 py-2 text-white transition-colors bg-red-500 rounded-md hover:bg-red-600"
-              >
-                <Trash size={18} className="mr-2" /> Eliminar
-              </button>
-              <button
-                title="Descargar PDF"
-                className="flex px-4 py-2 text-white rounded-md bg-primary hover:bg-primary-dark"
-              >
-                <PDFDownloadLink
-                  document={<ReciboPDF recibo={recibo} />}
-                  fileName={`${recibo.numero}.pdf`}
-                  className="flex text-white"
-                >     
-                  {({ blob, url, loading, error }) =>
-                    loading ?
-                      <span><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
-                      <span><Download size={18} className="mr-2" /> Descargar PDF</span>
-                  }
-                </PDFDownloadLink>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Vista previa estilo PDF */}
       <div className="container px-4 py-8 mx-auto">
-        <div className="max-w-2xl mx-auto bg-white shadow-lg">
-          {/* Encabezado compacto estilo PDF */}
-          <div className="flex items-center justify-between px-8 py-4 border-b border-blue-800">
-            <div className="flex items-center">
-              <div className="mr-3">
-                {/* Logo placeholder */}
-                <div className="flex items-center justify-center w-6 h-8 text-sm font-bold text-white bg-blue-800 rounded">
-                  S
-                </div>
-              </div>
-              <div>
-                <div className="text-lg font-bold">
-                  <span className="text-blue-800">Sin</span>
-                  <span className="text-blue-500">corp</span>
-                </div>
-                <div className="text-xs text-gray-600">Servicios Integrales</div>
-              </div>
-            </div>
-            <div className="text-xs text-right text-gray-600">
-              <div>CUIT: 20-24471842-7</div>
-              <div>Tel: (351) 681 0777</div>
-              <div>sincorpserviciosintegrales@gmail.com</div>
-            </div>
+        <div className="flex flex-wrap items-center justify-between mb-8">
+          <div className="flex items-center mb-4">
+            <Link
+              href="/admin/dashboard"
+              className="flex items-center mr-4 text-primary hover:underline"
+            >
+              <Home size={16} className="mr-1" /> Dashboard
+            </Link>
+            <span className="mx-2 text-gray-500">/</span>
+            <span className="text-gray-700">Historial de Recibos</span>
           </div>
 
-          {/* Título y número en la misma línea */}
-          <div className="flex items-center justify-between px-8 py-5">
-            <h1 className="text-2xl font-bold text-blue-800">RECIBO</h1>
-            <div className="text-lg text-blue-800">N° {recibo.numero || ''}</div>
+          <Link
+            href="/admin/recibos/nuevo"
+            className="flex items-center px-4 py-2 mb-4 text-white transition-colors rounded-md bg-primary hover:bg-primary-light"
+          >
+            <FilePlus size={18} className="mr-2" /> Nuevo Recibo
+          </Link>
+        </div>
+
+        <h2 className="mb-6 text-2xl font-bold font-montserrat text-primary">
+          Recibos
+        </h2>
+
+        <div className="p-6 mb-8 bg-white rounded-lg shadow-md">
+          <div className="relative flex items-center mb-6">
+            <Search size={18} className="absolute text-gray-400 left-3" />
+            <input
+              type="text"
+              placeholder="Buscar por número, cliente o concepto..."
+              value={filtro}
+              onChange={(e) => setFiltro(e.target.value)}
+              className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
           </div>
 
-          {/* Monto destacado */}
-          <div className="px-8 py-2">
-            <div className="p-4 text-xl font-bold text-center bg-gray-100 rounded">
-              {formatCurrency(recibo.monto)}
-            </div>
-          </div>
-
-          {/* Contenido principal */}
-          <div className="px-8 py-6 space-y-6">
-            <div className="pb-4 border-b border-gray-200">
-              <div className="flex items-start">
-                <div className="flex-shrink-0 w-24 text-xs font-bold text-gray-700">RECIBÍ DE:</div>
-                <div className="flex-1 text-xs text-black">{recibo.recibiDe || ''}</div>
-              </div>
-            </div>
-
-            <div className="pb-4 border-b border-gray-200">
-              <div className="flex items-start">
-                <div className="flex-shrink-0 w-24 text-xs font-bold text-gray-700">LA SUMA DE:</div>
-                <div className="flex-1 text-xs text-black">{recibo.cantidadLetras || ''}</div>
-              </div>
-            </div>
-
-            <div className="pb-4 border-b border-gray-200">
-              <div className="flex items-start">
-                <div className="flex-shrink-0 w-24 text-xs font-bold text-gray-700">CONCEPTO:</div>
-                <div className="flex-1 text-xs text-black">{recibo.concepto || ''}</div>
-              </div>
-            </div>
-
-            <div className="pb-4 border-b border-gray-200">
-              <div className="flex items-start">
-                <div className="flex-shrink-0 w-24 text-xs font-bold text-gray-700">FECHA:</div>
-                <div className="flex-1 text-xs text-black">{formatDate(recibo.fecha)}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Sección de firmas */}
-          <div className="flex justify-around px-8 py-12 mt-8">
-            <div className="flex flex-col items-center w-2/5">
-              {recibo.firma && (
-                <div className="flex items-center justify-center w-32 h-16 mb-2 border border-gray-200 rounded bg-gray-50">
-                  <img 
-                    src={recibo.firma} 
-                    alt="Firma" 
-                    className="object-contain max-w-full max-h-full"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'block';
-                    }}
-                  />
-                  <span style={{display: 'none'}} className="text-xs text-gray-400">Firma no disponible</span>
-                </div>
-              )}
-              <div className="w-full pt-1 border-t border-gray-800">
-                <div className="mt-1 text-xs text-center text-gray-600">FIRMA</div>
-              </div>
-            </div>
-
-            <div className="flex flex-col items-center w-2/5">
-              <div className="flex items-end justify-center w-32 h-16 mb-2">
-                {recibo.aclaracion && (
-                  <div className="text-xs text-center">{recibo.aclaracion}</div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                    Número
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                    Fecha
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                    Recibí de
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                    Concepto
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">
+                    Monto
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {recibosFiltrados.length > 0 ? (
+                  recibosFiltrados.map((recibo) => (
+                    <tr key={recibo.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{recibo.numero}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">
+                          {recibo.fechaCreacion
+                            ? new Date(recibo.fechaCreacion.toDate()).toLocaleDateString('es-AR')
+                            : recibo.fecha
+                              ? new Date(recibo.fecha).toLocaleDateString('es-AR')
+                              : 'No disponible'
+                          }
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{recibo.recibiDe || 'N/A'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="max-w-xs text-sm text-gray-500 truncate" title={recibo.concepto}>
+                          {recibo.concepto || 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {formatCurrency(recibo.monto)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
+                        <div className="flex justify-end space-x-4">
+                          <Link
+                            href={`/admin/recibos/${recibo.id}`}
+                            title="Ver detalles"
+                            className="text-gray-600 hover:text-primary"
+                          >
+                            <Eye size={18} />
+                          </Link>
+                          <PDFDownloadLink
+                            document={<ReciboPDF recibo={recibo} />}
+                            fileName={`Recibo_${recibo.numero}.pdf`}
+                            className="text-primary hover:text-primary-light"
+                          >
+                            {({ blob, url, loading, error }) =>
+                              <Download size={18} className={loading ? "animate-pulse" : ""} />
+                            }
+                          </PDFDownloadLink>
+                          <Link
+                            href={`/admin/recibos/editar/${recibo.id}`}
+                            title="Editar"
+                            className="text-secondary hover:text-secondary-light"
+                          >
+                            <Edit size={18} />
+                          </Link>
+                          <button
+                            onClick={() => handleDeleteRecibo(recibo.id)}
+                            title="Eliminar"
+                            className="text-red-500 cursor-pointer hover:text-red-700"
+                          >
+                            <Trash size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                      No hay recibos que coincidan con su búsqueda
+                    </td>
+                  </tr>
                 )}
-              </div>
-              <div className="w-full pt-1 border-t border-gray-800">
-                <div className="mt-1 text-xs text-center text-gray-600">ACLARACIÓN</div>
-              </div>
-            </div>
+              </tbody>
+            </table>
           </div>
 
-          {/* Pie de página */}
-          <div className="px-8 py-4 text-xs text-center text-gray-500 border-t border-gray-200">
-            <div>SINCORP Servicios Integrales - Av. Luciano Torrent 4800, 5000 - Córdoba</div>
-          </div>
+          {recibosFiltrados.length === 0 && filtro && (
+            <div className="py-10 text-center">
+              <FileText size={48} className="mx-auto mb-4 text-gray-400" />
+              <p className="mb-2 text-gray-500">No hay recibos que coincidan con su búsqueda</p>
+              <p className="text-sm text-gray-400">Intente con otros términos o cree un nuevo recibo</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
