@@ -21,7 +21,8 @@ import {
   Menu,
   X,
   Clock,
-  AlertCircle
+  AlertCircle,
+  File
 } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
@@ -35,7 +36,8 @@ export default function Dashboard() {
     presupuestos: 0,
     estados: 0,
     remitos: 0,
-    recibos: 0
+    recibos: 0,
+    documentos: 0
   });
   const router = useRouter();
 
@@ -71,11 +73,16 @@ export default function Dashboard() {
       const recibosRef = collection(db, 'recibos');
       const recibosSnapshot = await getDocs(recibosRef);
 
+      // Total de documentos
+      const documentosRef = collection(db, 'documentos');
+      const documentosSnapshot = await getDocs(documentosRef);
+
       setTotales({
         presupuestos: presupuestosSnapshot.size,
         estados: estadosSnapshot.size,
         remitos: remitosSnapshot.size,
-        recibos: recibosSnapshot.size
+        recibos: recibosSnapshot.size,
+        documentos: documentosSnapshot.size
       });
     } catch (error) {
       console.error('Error al cargar totales:', error);
@@ -165,6 +172,22 @@ export default function Dashboard() {
       },
       activo: true,
       proximamente: false
+    },
+    {
+      id: 'documentos',
+      titulo: 'Documentos',
+      icono: File,
+      color: 'bg-teal-500',
+      colorClaro: 'bg-teal-100',
+      colorTexto: 'text-teal-600',
+      descripcion: 'Hojas membretadas y certificaciones',
+      total: totales.documentos,
+      rutas: {
+        nuevo: '/admin/documentos/nuevo',
+        historial: '/admin/documentos'
+      },
+      activo: true,
+      proximamente: false
     }
   ];
 
@@ -236,7 +259,7 @@ export default function Dashboard() {
 
         {/* Módulos del sistema */}
         <h3 className="mb-4 text-xl font-bold text-gray-800">Documentos</h3>
-        <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {modulos.map(modulo => {
             const Icono = modulo.icono;
             return (
