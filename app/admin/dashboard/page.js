@@ -4,15 +4,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  FilePlus, 
-  FileText, 
-  Home, 
-  LogOut, 
-  BarChart3, 
-  DollarSign, 
-  FileCheck, 
-  Receipt, 
+import {
+  FilePlus,
+  FileText,
+  Home,
+  LogOut,
+  BarChart3,
+  DollarSign,
+  FileCheck,
+  Receipt,
   ScrollText,
   TrendingUp,
   Users,
@@ -60,7 +60,7 @@ export default function Dashboard() {
       // Total de presupuestos
       const presupuestosRef = collection(db, 'presupuestos');
       const presupuestosSnapshot = await getDocs(presupuestosRef);
-      
+
       // Total de estados
       const estadosRef = collection(db, 'estados');
       const estadosSnapshot = await getDocs(estadosRef);
@@ -263,11 +263,12 @@ export default function Dashboard() {
           {modulos.map(modulo => {
             const Icono = modulo.icono;
             return (
-              <div
+              <Link
                 key={modulo.id}
-                className={`relative overflow-hidden rounded-lg shadow-md transition-all ${
-                  modulo.activo ? 'hover:shadow-lg cursor-pointer' : 'opacity-75'
-                }`}
+                href={modulo.activo && !modulo.proximamente ? modulo.rutas.historial : '#'}
+                className={`relative overflow-hidden rounded-lg shadow-md transition-all block ${modulo.activo && !modulo.proximamente ? 'hover:shadow-xl hover:-translate-y-0.5 cursor-pointer' : 'opacity-75 cursor-default'
+                  }`}
+                style={{ transition: 'box-shadow 0.2s, transform 0.2s' }}
               >
                 {modulo.proximamente && (
                   <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
@@ -276,7 +277,7 @@ export default function Dashboard() {
                     </span>
                   </div>
                 )}
-                
+
                 <div className={`p-6 ${modulo.activo ? modulo.color : 'bg-gray-300'} text-white`}>
                   <Icono size={32} />
                   <h4 className="mt-4 text-lg font-bold">{modulo.titulo}</h4>
@@ -286,34 +287,34 @@ export default function Dashboard() {
                     <p className="text-xs opacity-75">Total registrados</p>
                   </div>
                 </div>
-                
+
                 {modulo.activo && (
                   <div className="p-4 bg-white">
                     <div className="space-y-2">
-                      <Link
-                        href={modulo.rutas.nuevo}
-                        className={`flex items-center justify-between p-2 rounded-md transition-colors ${modulo.colorClaro} ${modulo.colorTexto} hover:opacity-80`}
+                      <span
+                        role="link"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = modulo.rutas.nuevo; }}
+                        className={`flex items-center justify-between p-2 rounded-md transition-colors ${modulo.colorClaro} ${modulo.colorTexto} hover:opacity-80 cursor-pointer`}
                       >
                         <span className="flex items-center">
                           <FilePlus size={16} className="mr-2" />
                           Crear nuevo
                         </span>
                         <ChevronRight size={16} />
-                      </Link>
-                      <Link
-                        href={modulo.rutas.historial}
-                        className="flex items-center justify-between p-2 text-gray-700 transition-colors rounded-md hover:bg-gray-100"
+                      </span>
+                      <span
+                        className="flex items-center justify-between p-2 text-gray-700 transition-colors rounded-md hover:bg-gray-100 cursor-pointer"
                       >
                         <span className="flex items-center">
                           <ScrollText size={16} className="mr-2" />
                           Ver historial
                         </span>
                         <ChevronRight size={16} />
-                      </Link>
+                      </span>
                     </div>
                   </div>
                 )}
-              </div>
+              </Link>
             );
           })}
         </div>

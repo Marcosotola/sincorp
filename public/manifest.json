@@ -3,7 +3,7 @@
     "short_name": "Sincorp",
     "description": "Servicios técnicos profesionales en Automatismo, Electricidad, Climatización y Seguridad",
     "theme_color": "#1A5276",
-    "background_color": "#1A5276",
+    "background_color": "#ffffff",
     "display": "standalone",
     "orientation": "portrait",
     "start_url": "/",

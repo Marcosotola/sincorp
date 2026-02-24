@@ -4,6 +4,7 @@ import Footer from './components/layout/Footer';
 import WhatsAppBadge from './components/ui/WhatsAppBadge';
 import RegisterSW from './components/ui/RegisterSW';
 import InstallPrompt from './components/ui/InstallPrompt';
+import OfflineIndicator from './components/ui/OfflineIndicator';
 
 export const metadata = {
   title: 'Sincorp - Servicios Integrales',
@@ -28,6 +29,7 @@ export default function RootLayout({ children }) {
         <WhatsAppBadge phoneNumber="+5493516810777" />
         <RegisterSW />
         <InstallPrompt />
+        <OfflineIndicator />
       </body>
     </html>
   );
