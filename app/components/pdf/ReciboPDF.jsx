@@ -51,7 +51,22 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1A5276'
+    color: '#1A5276',
+    textDecoration: 'underline'
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+    paddingBottom: 5,
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  headerRowText: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   reciboNumber: {
     fontSize: 14,
@@ -179,10 +194,11 @@ const ReciboPDF = ({ recibo }) => {
           </View>
         </View>
 
-        {/* Título y número en la misma línea */}
-        <View style={styles.titleRow}>
+        {/* Nueva Fila de Encabezado con Fecha, Título y Número */}
+        <View style={styles.headerRow}>
+          <Text style={styles.headerRowText}>Fecha: {formatDate(recibo.fecha)}</Text>
           <Text style={styles.title}>RECIBO</Text>
-          <Text style={styles.reciboNumber}>N° {recibo.numero || ''}</Text>
+          <Text style={styles.headerRowText}>N.º {recibo.numero || ''}</Text>
         </View>
 
         {/* Monto destacado */}
@@ -213,12 +229,6 @@ const ReciboPDF = ({ recibo }) => {
             </View>
           </View>
 
-          <View style={styles.field}>
-            <View style={styles.fieldRow}>
-              <Text style={styles.label}>FECHA:</Text>
-              <Text style={styles.value}>{formatDate(recibo.fecha)}</Text>
-            </View>
-          </View>
         </View>
 
         {/* Sección de firmas */}

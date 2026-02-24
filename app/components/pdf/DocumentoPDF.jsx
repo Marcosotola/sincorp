@@ -49,7 +49,21 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#1A5276',
-    marginBottom: 5
+    textDecoration: 'underline'
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+    paddingBottom: 5,
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  headerRowText: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   subtitle: {
     fontSize: 12,
@@ -120,14 +134,11 @@ const DocumentoPDF = ({ documento }) => {
           </View>
         </View>
 
-        {/* Título */}
-        <View style={styles.titleRow}>
+        {/* Nueva Fila de Encabezado con Fecha y Título */}
+        <View style={styles.headerRow}>
+          <Text style={styles.headerRowText}>Fecha: {formatDate(documento.fecha)}</Text>
           <Text style={styles.title}>{documento.titulo || 'DOCUMENTO'}</Text>
-          {documento.fecha && (
-            <Text style={styles.subtitle}>
-              Córdoba, {formatDate(documento.fecha)}
-            </Text>
-          )}
+          <Text style={styles.headerRowText}></Text>
         </View>
 
         {/* Contenido principal */}

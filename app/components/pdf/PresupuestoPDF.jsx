@@ -45,11 +45,24 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 15,
-    color: '#1A5276'
+    color: '#1A5276',
+    textDecoration: 'underline'
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+    paddingBottom: 5,
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  headerRowText: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   section: {
     marginBottom: 15,
@@ -229,15 +242,15 @@ const formatearMonto = (valor) => {
   if (valor === null || valor === undefined || isNaN(valor) || valor === '') {
     return "0,00";
   }
-  
+
   // Convertir a número si es string
   const num = typeof valor === 'string' ? parseFloat(valor) : valor;
-  
+
   // Verificar nuevamente después de la conversión
   if (isNaN(num)) {
     return "0,00";
   }
-  
+
   // Formatear con separador de miles (punto) y decimales (coma)
   return num.toFixed(2)
     .replace('.', ',')
@@ -251,7 +264,7 @@ const PresupuestoPDF = ({ presupuesto }) => {
   // Función para formatear fechas
   const formatDateLocal = (dateString) => {
     if (!dateString) return '';
-    
+
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('es-AR', {
@@ -263,13 +276,13 @@ const PresupuestoPDF = ({ presupuesto }) => {
       return dateString; // Si hay error, devuelve el string original
     }
   };
-  
+
   // Verificar que cliente existe y tiene propiedades
   const clienteData = presupuesto.cliente || {};
-  
+
   // Verificar si hay descuento aplicado
   const tieneDescuento = presupuesto.montoDescuento && presupuesto.montoDescuento > 0;
-  
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -292,22 +305,18 @@ const PresupuestoPDF = ({ presupuesto }) => {
           </View>
         </View>
 
-        {/* Título */}
-        <Text style={styles.title}>PRESUPUESTO</Text>
+        {/* Nueva Fila de Encabezado con Fecha, Título y Número */}
+        <View style={styles.headerRow}>
+          <Text style={styles.headerRowText}>Fecha: {formatDateLocal(presupuesto.fecha)}</Text>
+          <Text style={styles.title}>PRESUPUESTO</Text>
+          <Text style={styles.headerRowText}>N.º {presupuesto.numero || ''}</Text>
+        </View>
 
         {/* Información del presupuesto y cliente en horizontal */}
         <View style={styles.horizontalInfoBlocks}>
           {/* Información del presupuesto */}
           <View style={[styles.infoBlock, { flex: 1, marginRight: 10 }]}>
-            <Text style={styles.sectionTitle}>Detalles del Presupuesto</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Número:</Text>
-              <Text style={styles.value}>{presupuesto.numero || ''}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Fecha:</Text>
-              <Text style={styles.value}>{formatDateLocal(presupuesto.fecha)}</Text>
-            </View>
+            <Text style={styles.sectionTitle}>Condiciones</Text>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Validez:</Text>
               <Text style={styles.value}>{presupuesto.validez || ''}</Text>
@@ -339,14 +348,14 @@ const PresupuestoPDF = ({ presupuesto }) => {
         {/* Tabla de items */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Detalle de Items</Text>
-          
+
           <View style={styles.tableHeader}>
             <Text style={[styles.col4, styles.colHeader]}>Descripción</Text>
             <Text style={[styles.col1, styles.colHeader]}>Cant.</Text>
             <Text style={[styles.col2, styles.colHeader]}>Precio Unit.</Text>
             <Text style={[styles.col2, styles.colHeader]}>Subtotal</Text>
           </View>
-          
+
           {(presupuesto.items || []).map((item, index) => (
             <View key={item.id} style={[styles.tableRow, index % 2 === 1 ? styles.oddRow : {}]}>
               {/* Aplicamos el nuevo estilo con padding derecho solo a la descripción */}
@@ -363,20 +372,20 @@ const PresupuestoPDF = ({ presupuesto }) => {
               <Text style={styles.totalLabel}>Subtotal:</Text>
               <Text style={styles.totalValue}>$ {formatearMonto(parseFloat(presupuesto.subtotal || 0))}</Text>
             </View>
-            
+
             {/* Mostrar descuento si existe */}
             {tieneDescuento && (
               <View style={styles.discountRow}>
                 <Text style={styles.discountLabel}>
-                  Descuento {presupuesto.tipoDescuento === 'porcentaje' ? 
-                    `(${presupuesto.valorDescuento}%)` : 
+                  Descuento {presupuesto.tipoDescuento === 'porcentaje' ?
+                    `(${presupuesto.valorDescuento}%)` :
                     '(monto fijo)'
                   }:
                 </Text>
                 <Text style={styles.discountValue}>-$ {formatearMonto(parseFloat(presupuesto.montoDescuento))}</Text>
               </View>
             )}
-            
+
             <View style={styles.grandTotal}>
               <Text style={styles.grandTotalLabel}>TOTAL:</Text>
               <Text style={styles.grandTotalValue}>$ {formatearMonto(parseFloat(presupuesto.total || 0))}</Text>

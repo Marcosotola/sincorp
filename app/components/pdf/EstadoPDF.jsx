@@ -44,11 +44,24 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 15,
-    color: '#1A5276'
+    color: '#1A5276',
+    textDecoration: 'underline'
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+    paddingBottom: 5,
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  headerRowText: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   section: {
     marginBottom: 15,
@@ -220,10 +233,10 @@ const formatDate = (dateString) => {
 // Función para formatear montos con punto como separador de miles y coma para decimales
 const formatearMonto = (valor) => {
   if (isNaN(valor)) return "0,00";
-  
+
   // Convertir a número si es string
   const num = typeof valor === 'string' ? parseFloat(valor) : valor;
-  
+
   // Formatear con separador de miles (punto) y decimales (coma)
   return num.toFixed(2)
     .replace('.', ',')
@@ -238,7 +251,7 @@ const EstadoPDF = ({ estado }) => {
   // Función para formatear fechas
   const formatDate = (dateString) => {
     if (!dateString) return '';
-    
+
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('es-AR', {
@@ -250,10 +263,10 @@ const EstadoPDF = ({ estado }) => {
       return dateString;
     }
   };
-  
+
   // Verificar que cliente existe y tiene propiedades
   const clienteData = estado.cliente || {};
-  
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -276,8 +289,12 @@ const EstadoPDF = ({ estado }) => {
           </View>
         </View>
 
-        {/* Título */}
-        <Text style={styles.title}>ESTADO DE CUENTA</Text>
+        {/* Nueva Fila de Encabezado con Fecha, Título y Número */}
+        <View style={styles.headerRow}>
+          <Text style={styles.headerRowText}>Fecha: {formatDate(estado.fecha)}</Text>
+          <Text style={styles.title}>ESTADO DE CUENTA</Text>
+          <Text style={styles.headerRowText}>N.º {estado.numero || ''}</Text>
+        </View>
 
         {/* Información del presupuesto y cliente en horizontal */}
         <View style={styles.horizontalInfoBlocks}>
@@ -285,12 +302,8 @@ const EstadoPDF = ({ estado }) => {
           <View style={[styles.infoBlock, { flex: 1, marginRight: 10 }]}>
             <Text style={styles.sectionTitle}>Datos</Text>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Número:</Text>
+              <Text style={styles.label}>N.º de Estado:</Text>
               <Text style={styles.value}>{estado.numero || ''}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Fecha:</Text>
-              <Text style={styles.value}>{formatDate(estado.fecha)}</Text>
             </View>
           </View>
 
@@ -319,14 +332,14 @@ const EstadoPDF = ({ estado }) => {
         {/* Tabla de items */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Reporte de avances</Text>
-          
+
           <View style={styles.tableHeader}>
             <Text style={[styles.col15, styles.colHeader]}>Fecha</Text>
             <Text style={[styles.col4, styles.colHeader]}>Concepto</Text>
             <Text style={[styles.col25, styles.colHeader]}>Monto</Text>
             <Text style={[styles.col4, styles.colHeader]}>Comentarios</Text>
           </View>
-          
+
           {(estado.items || []).map((item, index) => (
             <View key={item.id} style={[styles.tableRow, index % 2 === 1 ? styles.oddRow : {}]}>
               <Text style={[styles.col15, styles.colContent]}>{formatDate(item.fecha)}</Text>

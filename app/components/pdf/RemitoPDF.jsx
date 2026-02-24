@@ -43,11 +43,24 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 15,
-    color: '#1A5276'
+    color: '#1A5276',
+    textDecoration: 'underline'
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+    paddingBottom: 5,
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  headerRowText: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   section: {
     marginBottom: 15,
@@ -186,21 +199,21 @@ const RemitoPDF = ({ remito }) => {
           </View>
         </View>
 
-        {/* Título */}
-        <Text style={styles.title}>REMITO</Text>
+        {/* Nueva Fila de Encabezado con Fecha, Título y Número */}
+        <View style={styles.headerRow}>
+          <Text style={styles.headerRowText}>Fecha: {formatDate(remito.fecha)}</Text>
+          <Text style={styles.title}>REMITO</Text>
+          <Text style={styles.headerRowText}>N.º {remito.numero || ''}</Text>
+        </View>
 
         {/* Información del remito y cliente en horizontal */}
         <View style={styles.horizontalInfoBlocks}>
           {/* Información del remito */}
           <View style={[styles.infoBlock, { flex: 1, marginRight: 10 }]}>
-            <Text style={styles.sectionTitle}>Detalles del Remito</Text>
+            <Text style={styles.sectionTitle}>Referencia</Text>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>Número:</Text>
+              <Text style={styles.label}>N.º de Remito:</Text>
               <Text style={styles.value}>{remito.numero || ''}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Fecha:</Text>
-              <Text style={styles.value}>{formatDate(remito.fecha)}</Text>
             </View>
           </View>
 
@@ -277,7 +290,7 @@ const RemitoPDF = ({ remito }) => {
               <Text style={{ fontSize: 9, marginTop: 3, textAlign: 'center', fontWeight: 'bold' }}>
                 {remito.aclaracionFirma || 'Sin aclaración'}
               </Text>
-{/*               <Text style={{ fontSize: 8, marginTop: 2, textAlign: 'center' }}>
+              {/*               <Text style={{ fontSize: 8, marginTop: 2, textAlign: 'center' }}>
                 Firma y aclaración
               </Text> */}
             </View>
