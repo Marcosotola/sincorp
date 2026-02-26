@@ -6,6 +6,7 @@ import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/render
 const styles = StyleSheet.create({
   page: {
     padding: 30,
+    paddingBottom: 75,
     backgroundColor: '#ffffff',
     fontFamily: 'Helvetica'
   },
@@ -116,7 +117,7 @@ const DocumentoPDF = ({ documento }) => {
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Encabezado */}
-        <View style={styles.header}>
+        <View style={styles.header} fixed>
           <View style={styles.logoContainer}>
             <Image src={logoBase64} style={styles.logo} />
             <View style={styles.logoTextContainer}>
@@ -146,9 +147,12 @@ const DocumentoPDF = ({ documento }) => {
           <Text style={styles.bodyText}>{documento.contenido || ''}</Text>
         </View>
 
-        {/* Pie de página */}
-        <View style={styles.footer}>
+        {/* Pie de página con numeración */}
+        <View style={styles.footer} fixed>
           <Text>SINCORP Servicios Integrales - Av. Luciano Torrent 4800, 5000 - Córdoba</Text>
+          <Text style={{ marginTop: 5 }} render={({ pageNumber, totalPages }) => (
+            `Hoja ${pageNumber} de ${totalPages}`
+          )} />
         </View>
       </Page>
     </Document>

@@ -5,6 +5,7 @@ import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/
 const styles = StyleSheet.create({
   page: {
     padding: 30,
+    paddingBottom: 75,
     backgroundColor: '#ffffff',
     fontFamily: 'Helvetica'
   },
@@ -271,7 +272,7 @@ const EstadoPDF = ({ estado }) => {
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Encabezado */}
-        <View style={styles.header}>
+        <View style={styles.header} fixed>
           <View style={styles.logoContainer}>
             <Image src={logoBase64} style={styles.logo} />
             <View style={styles.logoTextContainer}>
@@ -300,7 +301,7 @@ const EstadoPDF = ({ estado }) => {
         <View style={styles.horizontalInfoBlocks}>
           {/* Información del presupuesto */}
           <View style={[styles.infoBlock, { flex: 1, marginRight: 10 }]}>
-            <Text style={styles.sectionTitle}>Datos</Text>
+            <Text style={sectionTitleStyle}>Datos</Text>
             <View style={styles.infoRow}>
               <Text style={styles.label}>N.º de Estado:</Text>
               <Text style={styles.value}>{estado.numero || ''}</Text>
@@ -309,7 +310,7 @@ const EstadoPDF = ({ estado }) => {
 
           {/* Información del cliente */}
           <View style={[styles.infoBlock, { flex: 1 }]}>
-            <Text style={styles.sectionTitle}>Cliente</Text>
+            <Text style={sectionTitleStyle}>Cliente</Text>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Nombre:</Text>
               <Text style={styles.value}>{estado.cliente.nombre || ''}</Text>
@@ -331,7 +332,7 @@ const EstadoPDF = ({ estado }) => {
 
         {/* Tabla de items */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Reporte de avances</Text>
+          <Text style={sectionTitleStyle}>Reporte de avances</Text>
 
           <View style={styles.tableHeader}>
             <Text style={[styles.col15, styles.colHeader]}>Fecha</Text>
@@ -341,7 +342,7 @@ const EstadoPDF = ({ estado }) => {
           </View>
 
           {(estado.items || []).map((item, index) => (
-            <View key={item.id} style={[styles.tableRow, index % 2 === 1 ? styles.oddRow : {}]}>
+            <View key={item.id} style={[styles.tableRow, index % 2 === 1 ? styles.oddRow : {}]} wrap={false}>
               <Text style={[styles.col15, styles.colContent]}>{formatDate(item.fecha)}</Text>
               <Text style={[styles.col4, styles.conceptoContent]}>{item.descripcion || ''}</Text>
               <Text style={[styles.col25, styles.colContent]}>$ {formatearMonto(parseFloat(item.precio || 0))}</Text>
@@ -358,10 +359,13 @@ const EstadoPDF = ({ estado }) => {
           </View>
         </View>
 
-        {/* Pie de página */}
-        <View style={styles.footer}>
+        {/* Pie de página con numeración */}
+        <View style={styles.footer} fixed>
           <Text>SINCORP Servicios Integrales - CUIT: 20-24471842-7</Text>
           <Text>Av. Luciano Torrent 4800, 5000 - Cordoba - Tel: (351) 681 0777 - www.sincorp.vercel.app</Text>
+          <Text style={{ marginTop: 5 }} render={({ pageNumber, totalPages }) => (
+            `Hoja ${pageNumber} de ${totalPages}`
+          )} />
         </View>
       </Page>
     </Document>

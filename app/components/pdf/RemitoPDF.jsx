@@ -5,6 +5,7 @@ import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/render
 const styles = StyleSheet.create({
   page: {
     padding: 30,
+    paddingBottom: 75,
     backgroundColor: '#ffffff',
     fontFamily: 'Helvetica'
   },
@@ -181,7 +182,7 @@ const RemitoPDF = ({ remito }) => {
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Encabezado */}
-        <View style={styles.header}>
+        <View style={styles.header} fixed>
           <View style={styles.logoContainer}>
             <Image src={logoBase64} style={styles.logo} />
             <View style={styles.logoTextContainer}>
@@ -246,7 +247,7 @@ const RemitoPDF = ({ remito }) => {
           </View>
 
           {(remito.items || []).map((item, index) => (
-            <View key={item.id} style={[styles.tableRow, index % 2 === 1 ? styles.oddRow : {}]}>
+            <View key={item.id} style={[styles.tableRow, index % 2 === 1 ? styles.oddRow : {}]} wrap={false}>
               <Text style={[styles.col4, styles.colContent]}>{item.descripcion || ''}</Text>
               <Text style={[styles.col1, styles.colContent]}>{item.cantidad || ''}</Text>
               <Text style={[styles.col1, styles.colContent]}>{item.unidad || ''}</Text>
@@ -297,10 +298,13 @@ const RemitoPDF = ({ remito }) => {
           </View>
         </View>
 
-        {/* Pie de página */}
-        <View style={styles.footer}>
+        {/* Pie de página con numeración */}
+        <View style={styles.footer} fixed>
           <Text>SINCORP Servicios Integrales - CUIT: 20-24471842-7</Text>
           <Text>Av. Luciano Torrent 4800, 5000 - Cordoba - Tel: (351) 681 0777 - www.sincorp.vercel.app</Text>
+          <Text style={{ marginTop: 5 }} render={({ pageNumber, totalPages }) => (
+            `Hoja ${pageNumber} de ${totalPages}`
+          )} />
         </View>
       </Page>
     </Document>
