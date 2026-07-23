@@ -58,9 +58,12 @@ export default function EditarPresupuesto({ params }) {
     numero: '',
     fecha: '',
     validez: '',
+    formato: 'items', // 'items' | 'global'
     items: [
       { id: 1, descripcion: '', cantidad: 1, precioUnitario: 0, subtotal: 0 }
     ],
+    descripcionGlobal: '',
+    montoGlobal: 0,
     notas: '',
     subtotal: 0,
     // Campos de descuento (valores por defecto para compatibilidad)
@@ -88,7 +91,10 @@ export default function EditarPresupuesto({ params }) {
             numero: presupuestoData.numero,
             fecha: presupuestoData.fecha,
             validez: presupuestoData.validez,
+            formato: presupuestoData.formato || 'items',
             items: presupuestoData.items || [],
+            descripcionGlobal: presupuestoData.descripcionGlobal || '',
+            montoGlobal: presupuestoData.montoGlobal || 0,
             notas: presupuestoData.notas,
             subtotal: presupuestoData.subtotal,
             tipoDescuento: presupuestoData.tipoDescuento || 'ninguno',
@@ -187,6 +193,10 @@ export default function EditarPresupuesto({ params }) {
     });
   };
 
+  // Ítems efectivos para el cálculo de totales según el formato elegido
+  const getItemsParaTotales = (p) =>
+    p.formato === 'global' ? [{ subtotal: p.montoGlobal || 0 }] : p.items;
+
   // Función para manejar cambios en descuentos
   const handleDescuentoChange = (tipo, valor) => {
     // Manejar valores vacíos o inválidos
@@ -195,19 +205,46 @@ export default function EditarPresupuesto({ params }) {
       const parsed = parseFloat(valor);
       valorNumerico = isNaN(parsed) ? 0 : parsed;
     }
-    
+
     // Validaciones
     if (tipo === 'porcentaje' && valorNumerico > 100) {
       alert('El porcentaje de descuento no puede ser mayor a 100%');
       return;
     }
 
-    const totales = calcularTotales(presupuesto.items, tipo, valorNumerico);
+    const totales = calcularTotales(getItemsParaTotales(presupuesto), tipo, valorNumerico);
 
     setPresupuesto({
       ...presupuesto,
       tipoDescuento: tipo,
       valorDescuento: valorNumerico,
+      ...totales
+    });
+  };
+
+  // Función para cambiar entre formato "por ítems" y "global"
+  const handleFormatoChange = (formato) => {
+    const totales = calcularTotales(
+      getItemsParaTotales({ ...presupuesto, formato }),
+      presupuesto.tipoDescuento,
+      presupuesto.valorDescuento
+    );
+
+    setPresupuesto({
+      ...presupuesto,
+      formato,
+      ...totales
+    });
+  };
+
+  // Función para manejar el monto del formato global
+  const handleMontoGlobalChange = (valor) => {
+    const monto = parseFloat(valor) || 0;
+    const totales = calcularTotales([{ subtotal: monto }], presupuesto.tipoDescuento, presupuesto.valorDescuento);
+
+    setPresupuesto({
+      ...presupuesto,
+      montoGlobal: monto,
       ...totales
     });
   };
@@ -250,7 +287,10 @@ export default function EditarPresupuesto({ params }) {
         fecha: presupuesto.fecha,
         validez: presupuesto.validez,
         cliente: cliente,
+        formato: presupuesto.formato,
         items: presupuesto.items,
+        descripcionGlobal: presupuesto.descripcionGlobal,
+        montoGlobal: presupuesto.montoGlobal,
         notas: presupuesto.notas,
         subtotal: presupuesto.subtotal,
         tipoDescuento: presupuesto.tipoDescuento,
@@ -438,6 +478,34 @@ export default function EditarPresupuesto({ params }) {
           {/* Items del presupuesto */}
           <div className="p-6 bg-white rounded-lg shadow-md">
             <h3 className="mb-4 text-lg font-semibold text-gray-700">Detalle del Presupuesto</h3>
+
+            {/* Selector de formato */}
+            <div className="mb-6">
+              <label className="block mb-2 text-sm font-medium text-gray-700">Formato del presupuesto</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="formato"
+                    checked={presupuesto.formato === 'items'}
+                    onChange={() => handleFormatoChange('items')}
+                  />
+                  <span className="text-sm text-gray-700">Por ítems</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="formato"
+                    checked={presupuesto.formato === 'global'}
+                    onChange={() => handleFormatoChange('global')}
+                  />
+                  <span className="text-sm text-gray-700">Presupuesto global</span>
+                </label>
+              </div>
+            </div>
+
+            {presupuesto.formato === 'items' && (
+            <>
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead>
@@ -526,13 +594,42 @@ export default function EditarPresupuesto({ params }) {
             </div>
             
             <div className="mt-4">
-              <button 
+              <button
                 onClick={addItem}
                 className="flex items-center text-blue-500 hover:text-blue-700"
               >
                 <PlusCircle size={18} className="mr-1" /> Agregar ítem
               </button>
             </div>
+            </>
+            )}
+
+            {presupuesto.formato === 'global' && (
+            <div className="space-y-4">
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Descripción del servicio</label>
+                <textarea
+                  value={presupuesto.descripcionGlobal}
+                  onChange={(e) => setPresupuesto({ ...presupuesto, descripcionGlobal: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md min-h-[220px] resize-y"
+                  placeholder="Describí el alcance completo del trabajo..."
+                  rows={12}
+                />
+              </div>
+              <div className="md:w-64">
+                <label className="block mb-1 text-sm font-medium text-gray-700">Precio total</label>
+                <input
+                  type="number"
+                  value={presupuesto.montoGlobal}
+                  onChange={(e) => handleMontoGlobalChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="0"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+            </div>
+            )}
 
             {/* Sección de Descuentos */}
             <div className="p-4 mt-6 border rounded-lg bg-gray-50">

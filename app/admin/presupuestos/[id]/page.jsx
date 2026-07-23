@@ -322,27 +322,36 @@ export default function VerPresupuesto({ params }) {
             </div>
           </div>
 
-          {/* Tabla de items */}
+          {/* Detalle: por items o formato global */}
           <div className="px-8 py-4">
-            <h3 className="p-2 mb-3 text-sm font-bold text-blue-800 bg-gray-100 rounded">Detalle de Items</h3>
-            
-            {/* Encabezado de tabla */}
-            <div className="flex text-xs font-bold text-white bg-blue-800">
-              <div className="flex-1 p-3 pr-4">Descripción</div>
-              <div className="w-20 p-3 text-center">Cant.</div>
-              <div className="p-3 text-center w-28">Precio Unit.</div>
-              <div className="p-3 text-center w-28">Subtotal</div>
-            </div>
-            
-            {/* Filas de items */}
-            {(presupuesto.items || []).map((item, index) => (
-              <div key={item.id} className={`flex text-xs border-b border-gray-200 ${index % 2 === 1 ? 'bg-gray-50' : 'bg-white'}`}>
-                <div className="flex-1 p-3 pr-4">{item.descripcion || ''}</div>
-                <div className="w-20 p-3 text-center">{parseFloat(item.cantidad || 0)}</div>
-                <div className="p-3 text-center w-28">$ {formatearMonto(parseFloat(item.precioUnitario || 0))}</div>
-                <div className="p-3 font-medium text-center w-28">$ {formatearMonto(parseFloat(item.subtotal || 0))}</div>
-              </div>
-            ))}
+            {presupuesto.formato === 'global' ? (
+              <>
+                <h3 className="p-2 mb-3 text-sm font-bold text-blue-800 bg-gray-100 rounded">Descripción del Servicio</h3>
+                <div className="p-3 text-xs whitespace-pre-line">{presupuesto.descripcionGlobal || ''}</div>
+              </>
+            ) : (
+              <>
+                <h3 className="p-2 mb-3 text-sm font-bold text-blue-800 bg-gray-100 rounded">Detalle de Items</h3>
+
+                {/* Encabezado de tabla */}
+                <div className="flex text-xs font-bold text-white bg-blue-800">
+                  <div className="flex-1 p-3 pr-4">Descripción</div>
+                  <div className="w-20 p-3 text-center">Cant.</div>
+                  <div className="p-3 text-center w-28">Precio Unit.</div>
+                  <div className="p-3 text-center w-28">Subtotal</div>
+                </div>
+
+                {/* Filas de items */}
+                {(presupuesto.items || []).map((item, index) => (
+                  <div key={item.id} className={`flex text-xs border-b border-gray-200 ${index % 2 === 1 ? 'bg-gray-50' : 'bg-white'}`}>
+                    <div className="flex-1 p-3 pr-4">{item.descripcion || ''}</div>
+                    <div className="w-20 p-3 text-center">{parseFloat(item.cantidad || 0)}</div>
+                    <div className="p-3 text-center w-28">$ {formatearMonto(parseFloat(item.precioUnitario || 0))}</div>
+                    <div className="p-3 font-medium text-center w-28">$ {formatearMonto(parseFloat(item.subtotal || 0))}</div>
+                  </div>
+                ))}
+              </>
+            )}
 
             {/* Totales con descuentos */}
             <div className="flex justify-end mt-4">

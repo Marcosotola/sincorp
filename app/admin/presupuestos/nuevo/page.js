@@ -9,7 +9,7 @@ import { Home, LogOut, Save, Download, Eye, PlusCircle, Trash2, Percent, DollarS
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
 import { crearPresupuesto } from '../../../lib/firestore';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import { pdf } from '@react-pdf/renderer';
 import PresupuestoPDF from '../../../components/pdf/PresupuestoPDF';
 
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
@@ -34,6 +34,7 @@ export default function NuevoPresupuesto() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [guardando, setGuardando] = useState(false);
+    const [generandoPDF, setGenerandoPDF] = useState(false);
     
     // Estado para el modal de descripción
     const [modalDescripcion, setModalDescripcion] = useState({
@@ -55,10 +56,13 @@ export default function NuevoPresupuesto() {
         numero: `P-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
         fecha: new Date().toISOString().split('T')[0],
         validez: '30 días',
+        formato: 'items', // 'items' | 'global'
         items: [
             { id: 1, descripcion: '', cantidad: '', precioUnitario: '', subtotal: 0 }
         ],
-        notas: 'Este presupuesto tiene una validez de 30 días a partir de la fecha de emisión.',
+        descripcionGlobal: '',
+        montoGlobal: 0,
+        notas: '',
         subtotal: 0,
         // Nuevos campos para descuentos
         tipoDescuento: 'ninguno', // 'ninguno', 'porcentaje', 'monto'
@@ -157,22 +161,53 @@ export default function NuevoPresupuesto() {
         });
     };
 
+    // Ítems efectivos para el cálculo de totales según el formato elegido
+    const getItemsParaTotales = (p) =>
+        p.formato === 'global' ? [{ subtotal: p.montoGlobal || 0 }] : p.items;
+
     // Función para manejar cambios en descuentos
     const handleDescuentoChange = (tipo, valor) => {
         const valorNumerico = parseFloat(valor) || 0;
-        
+
         // Validaciones
         if (tipo === 'porcentaje' && valorNumerico > 100) {
             alert('El porcentaje de descuento no puede ser mayor a 100%');
             return;
         }
 
-        const totales = calcularTotales(presupuesto.items, tipo, valorNumerico);
+        const totales = calcularTotales(getItemsParaTotales(presupuesto), tipo, valorNumerico);
 
         setPresupuesto({
             ...presupuesto,
             tipoDescuento: tipo,
             valorDescuento: valorNumerico,
+            ...totales
+        });
+    };
+
+    // Función para cambiar entre formato "por ítems" y "global"
+    const handleFormatoChange = (formato) => {
+        const totales = calcularTotales(
+            getItemsParaTotales({ ...presupuesto, formato }),
+            presupuesto.tipoDescuento,
+            presupuesto.valorDescuento
+        );
+
+        setPresupuesto({
+            ...presupuesto,
+            formato,
+            ...totales
+        });
+    };
+
+    // Función para manejar el monto del formato global
+    const handleMontoGlobalChange = (valor) => {
+        const monto = parseFloat(valor) || 0;
+        const totales = calcularTotales([{ subtotal: monto }], presupuesto.tipoDescuento, presupuesto.valorDescuento);
+
+        setPresupuesto({
+            ...presupuesto,
+            montoGlobal: monto,
             ...totales
         });
     };
@@ -206,6 +241,35 @@ export default function NuevoPresupuesto() {
         });
     };
 
+    const tieneContenido = presupuesto.formato === 'global'
+        ? !!presupuesto.descripcionGlobal
+        : !!presupuesto.items[0]?.descripcion;
+
+    const handleDescargarPDF = async () => {
+        if (!tieneContenido || generandoPDF) return;
+
+        setGenerandoPDF(true);
+        try {
+            const blob = await pdf(
+                <PresupuestoPDF presupuesto={{ ...presupuesto, cliente }} />
+            ).toBlob();
+
+            const url = URL.createObjectURL(blob);
+            const link = window.document.createElement('a');
+            link.href = url;
+            link.download = `${presupuesto.numero}.pdf`;
+            window.document.body.appendChild(link);
+            link.click();
+            window.document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error al generar el PDF:', error);
+            alert('Error al generar el PDF. Inténtelo de nuevo.');
+        } finally {
+            setGenerandoPDF(false);
+        }
+    };
+
     const handleGuardarPresupuesto = async () => {
         setGuardando(true);
         try {
@@ -215,7 +279,10 @@ export default function NuevoPresupuesto() {
                 fecha: presupuesto.fecha,
                 validez: presupuesto.validez,
                 cliente: cliente,
+                formato: presupuesto.formato,
                 items: presupuesto.items,
+                descripcionGlobal: presupuesto.descripcionGlobal,
+                montoGlobal: presupuesto.montoGlobal,
                 notas: presupuesto.notas,
                 subtotal: presupuesto.subtotal,
                 tipoDescuento: presupuesto.tipoDescuento,
@@ -303,20 +370,19 @@ export default function NuevoPresupuesto() {
                             {guardando ? 'Guardando...' : 'Guardar'}
                         </button>
                         <button
-                            className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600"
+                            onClick={handleDescargarPDF}
+                            disabled={!tieneContenido || generandoPDF}
+                            className="flex items-center px-4 py-2 text-white transition-colors rounded-md bg-secondary hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <PDFDownloadLink
-                                document={<PresupuestoPDF presupuesto={{ ...presupuesto, cliente }} />}
-                                fileName={`${presupuesto.numero}.pdf`}
-                                className={`bg-secondary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors flex items-center ${!presupuesto.items[0].descripcion ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                disabled={!presupuesto.items[0].descripcion}
-                            >
-                                {({ blob, url, loading, error }) =>
-                                    loading ?
-                                        <span><span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...</span> :
-                                        <span><Download size={18} className="mr-2" /> Descargar PDF</span>
-                                }
-                            </PDFDownloadLink>
+                            {generandoPDF ? (
+                                <>
+                                    <span className="inline-block w-4 h-4 mr-2 border-t-2 border-white rounded-full animate-spin"></span> Generando PDF...
+                                </>
+                            ) : (
+                                <>
+                                    <Download size={18} className="mr-2" /> Descargar PDF
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>
@@ -421,6 +487,34 @@ export default function NuevoPresupuesto() {
                     {/* Items del presupuesto */}
                     <div className="p-6 bg-white rounded-lg shadow-md">
                         <h3 className="mb-4 text-lg font-semibold text-gray-700">Detalle del Presupuesto</h3>
+
+                        {/* Selector de formato */}
+                        <div className="mb-6">
+                            <label className="block mb-2 text-sm font-medium text-gray-700">Formato del presupuesto</label>
+                            <div className="flex gap-4">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="formato"
+                                        checked={presupuesto.formato === 'items'}
+                                        onChange={() => handleFormatoChange('items')}
+                                    />
+                                    <span className="text-sm text-gray-700">Por ítems</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="formato"
+                                        checked={presupuesto.formato === 'global'}
+                                        onChange={() => handleFormatoChange('global')}
+                                    />
+                                    <span className="text-sm text-gray-700">Presupuesto global</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {presupuesto.formato === 'items' && (
+                        <>
                         <div className="overflow-x-auto">
                             <table className="min-w-full">
                                 <thead>
@@ -519,6 +613,35 @@ export default function NuevoPresupuesto() {
                                 <PlusCircle size={18} className="mr-1" /> Agregar ítem
                             </button>
                         </div>
+                        </>
+                        )}
+
+                        {presupuesto.formato === 'global' && (
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block mb-1 text-sm font-medium text-gray-700">Descripción del servicio</label>
+                                <textarea
+                                    value={presupuesto.descripcionGlobal}
+                                    onChange={(e) => setPresupuesto({ ...presupuesto, descripcionGlobal: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md min-h-[220px] resize-y"
+                                    placeholder="Describí el alcance completo del trabajo..."
+                                    rows={12}
+                                />
+                            </div>
+                            <div className="md:w-64">
+                                <label className="block mb-1 text-sm font-medium text-gray-700">Precio total</label>
+                                <input
+                                    type="number"
+                                    value={presupuesto.montoGlobal}
+                                    onChange={(e) => handleMontoGlobalChange(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    placeholder="0"
+                                    min="0"
+                                    step="0.01"
+                                />
+                            </div>
+                        </div>
+                        )}
 
                         {/* Sección de Descuentos */}
                         <div className="p-4 mt-6 border rounded-lg bg-gray-50">

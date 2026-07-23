@@ -114,6 +114,12 @@ const styles = StyleSheet.create({
     fontSize: 9,
     paddingRight: 15, // Agrega espacio a la derecha de la descripción
   },
+  // Descripción de ancho completo para el formato "global"
+  globalDescripcion: {
+    fontSize: 9,
+    lineHeight: 1.5,
+    marginBottom: 15,
+  },
   infoBlock: {
     backgroundColor: '#f9f9f9',
     padding: 10,
@@ -284,6 +290,35 @@ const PresupuestoPDF = ({ presupuesto }) => {
   // Verificar si hay descuento aplicado
   const tieneDescuento = presupuesto.montoDescuento && presupuesto.montoDescuento > 0;
 
+  const esFormatoGlobal = presupuesto.formato === 'global';
+
+  const totalesBlock = (
+    <View style={styles.totals}>
+      <View style={styles.totalRow}>
+        <Text style={styles.totalLabel}>Subtotal:</Text>
+        <Text style={styles.totalValue}>$ {formatearMonto(parseFloat(presupuesto.subtotal || 0))}</Text>
+      </View>
+
+      {/* Mostrar descuento si existe */}
+      {tieneDescuento && (
+        <View style={styles.discountRow}>
+          <Text style={styles.discountLabel}>
+            Descuento {presupuesto.tipoDescuento === 'porcentaje' ?
+              `(${presupuesto.valorDescuento}%)` :
+              '(monto fijo)'
+            }:
+          </Text>
+          <Text style={styles.discountValue}>-$ {formatearMonto(parseFloat(presupuesto.montoDescuento))}</Text>
+        </View>
+      )}
+
+      <View style={styles.grandTotal}>
+        <Text style={styles.grandTotalLabel}>TOTAL:</Text>
+        <Text style={styles.grandTotalValue}>$ {formatearMonto(parseFloat(presupuesto.total || 0))}</Text>
+      </View>
+    </View>
+  );
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -346,53 +381,39 @@ const PresupuestoPDF = ({ presupuesto }) => {
           </View>
         </View>
 
-        {/* Tabla de items */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Detalle de Items</Text>
+        {esFormatoGlobal ? (
+          /* Formato global: descripción de ancho completo + totales */
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Descripción del Servicio</Text>
+            <Text style={styles.globalDescripcion}>{presupuesto.descripcionGlobal || ''}</Text>
 
-          <View style={styles.tableHeader}>
-            <Text style={[styles.col4, styles.colHeader]}>Descripción</Text>
-            <Text style={[styles.col1, styles.colHeader]}>Cant.</Text>
-            <Text style={[styles.col2, styles.colHeader]}>Precio Unit.</Text>
-            <Text style={[styles.col2, styles.colHeader]}>Subtotal</Text>
+            {totalesBlock}
           </View>
+        ) : (
+          /* Formato por items */
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Detalle de Items</Text>
 
-          {(presupuesto.items || []).map((item, index) => (
-            <View key={item.id} style={[styles.tableRow, index % 2 === 1 ? styles.oddRow : {}]} wrap={false}>
-              {/* Aplicamos el nuevo estilo con padding derecho solo a la descripción */}
-              <Text style={[styles.col4, styles.colContentDescription]}>{item.descripcion || ''}</Text>
-              <Text style={[styles.col1, styles.colContent]}>{parseFloat(item.cantidad || 0)}</Text>
-              <Text style={[styles.col2, styles.colContent]}>$ {formatearMonto(parseFloat(item.precioUnitario || 0))}</Text>
-              <Text style={[styles.col2, styles.colContent]}>$ {formatearMonto(parseFloat(item.subtotal || 0))}</Text>
-            </View>
-          ))}
-
-          {/* Totales con descuentos */}
-          <View style={styles.totals}>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Subtotal:</Text>
-              <Text style={styles.totalValue}>$ {formatearMonto(parseFloat(presupuesto.subtotal || 0))}</Text>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.col4, styles.colHeader]}>Descripción</Text>
+              <Text style={[styles.col1, styles.colHeader]}>Cant.</Text>
+              <Text style={[styles.col2, styles.colHeader]}>Precio Unit.</Text>
+              <Text style={[styles.col2, styles.colHeader]}>Subtotal</Text>
             </View>
 
-            {/* Mostrar descuento si existe */}
-            {tieneDescuento && (
-              <View style={styles.discountRow}>
-                <Text style={styles.discountLabel}>
-                  Descuento {presupuesto.tipoDescuento === 'porcentaje' ?
-                    `(${presupuesto.valorDescuento}%)` :
-                    '(monto fijo)'
-                  }:
-                </Text>
-                <Text style={styles.discountValue}>-$ {formatearMonto(parseFloat(presupuesto.montoDescuento))}</Text>
+            {(presupuesto.items || []).map((item, index) => (
+              <View key={item.id} style={[styles.tableRow, index % 2 === 1 ? styles.oddRow : {}]} wrap={false}>
+                {/* Aplicamos el nuevo estilo con padding derecho solo a la descripción */}
+                <Text style={[styles.col4, styles.colContentDescription]}>{item.descripcion || ''}</Text>
+                <Text style={[styles.col1, styles.colContent]}>{parseFloat(item.cantidad || 0)}</Text>
+                <Text style={[styles.col2, styles.colContent]}>$ {formatearMonto(parseFloat(item.precioUnitario || 0))}</Text>
+                <Text style={[styles.col2, styles.colContent]}>$ {formatearMonto(parseFloat(item.subtotal || 0))}</Text>
               </View>
-            )}
+            ))}
 
-            <View style={styles.grandTotal}>
-              <Text style={styles.grandTotalLabel}>TOTAL:</Text>
-              <Text style={styles.grandTotalValue}>$ {formatearMonto(parseFloat(presupuesto.total || 0))}</Text>
-            </View>
+            {totalesBlock}
           </View>
-        </View>
+        )}
 
         {/* Notas */}
         <View style={styles.notes}>

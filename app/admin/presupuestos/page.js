@@ -8,7 +8,8 @@ import { FilePlus, FileText, Home, LogOut, Search, Download, Edit, Trash, Eye } 
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, getDocs, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { auth, db } from '../../lib/firebase';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import { actualizarPresupuesto } from '../../lib/firestore';
+import { pdf } from '@react-pdf/renderer';
 import PresupuestoPDF from '../../components/pdf/PresupuestoPDF';
 
 export default function HistorialPresupuestos() {
@@ -16,6 +17,8 @@ export default function HistorialPresupuestos() {
   const [loading, setLoading] = useState(true);
   const [presupuestos, setPresupuestos] = useState([]);
   const [filtro, setFiltro] = useState('');
+  const [descargandoId, setDescargandoId] = useState(null);
+  const [cambiandoEstadoId, setCambiandoEstadoId] = useState(null);
   const router = useRouter();
 
 
@@ -82,6 +85,46 @@ export default function HistorialPresupuestos() {
       router.push('/admin');
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
+    }
+  };
+
+  const handleDescargarPDF = async (presupuestoData) => {
+    if (descargandoId) return;
+
+    setDescargandoId(presupuestoData.id);
+    try {
+      const blob = await pdf(
+        <PresupuestoPDF presupuesto={presupuestoData} />
+      ).toBlob();
+
+      const url = URL.createObjectURL(blob);
+      const link = window.document.createElement('a');
+      link.href = url;
+      link.download = `${presupuestoData.numero}.pdf`;
+      window.document.body.appendChild(link);
+      link.click();
+      window.document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error al generar el PDF:', error);
+      alert('Error al generar el PDF. Inténtelo de nuevo.');
+    } finally {
+      setDescargandoId(null);
+    }
+  };
+
+  const handleCambiarEstado = async (id, nuevoEstado) => {
+    setCambiandoEstadoId(id);
+    try {
+      await actualizarPresupuesto(id, { estado: nuevoEstado });
+      setPresupuestos(prev =>
+        prev.map(p => (p.id === id ? { ...p, estado: nuevoEstado } : p))
+      );
+    } catch (error) {
+      console.error('Error al cambiar el estado:', error);
+      alert('Error al cambiar el estado del presupuesto.');
+    } finally {
+      setCambiandoEstadoId(null);
     }
   };
 
@@ -233,12 +276,19 @@ export default function HistorialPresupuestos() {
                         ${presupuesto.total ? presupuesto.total.toLocaleString() : '0.00'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                          ${presupuesto.estado === 'Aprobado' ? 'bg-green-100 text-green-800' :
-                            presupuesto.estado === 'Rechazado' ? 'bg-red-100 text-red-800' :
-                              'bg-yellow-100 text-yellow-800'}`}>
-                          {presupuesto.estado || 'Pendiente'}
-                        </span>
+                        <select
+                          value={presupuesto.estado || 'Pendiente'}
+                          onChange={(e) => handleCambiarEstado(presupuesto.id, e.target.value)}
+                          disabled={cambiandoEstadoId === presupuesto.id}
+                          className={`px-2 py-1 text-xs leading-5 font-semibold rounded-full border-0 cursor-pointer disabled:opacity-50 disabled:cursor-wait
+                            ${presupuesto.estado === 'Aprobado' ? 'bg-green-100 text-green-800' :
+                              presupuesto.estado === 'Rechazado' ? 'bg-red-100 text-red-800' :
+                                'bg-yellow-100 text-yellow-800'}`}
+                        >
+                          <option value="Pendiente">Pendiente</option>
+                          <option value="Aprobado">Aprobado</option>
+                          <option value="Rechazado">Rechazado</option>
+                        </select>
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                         <div className="flex justify-end space-x-4">
@@ -252,27 +302,13 @@ export default function HistorialPresupuestos() {
                           </Link>
 
 
-                          {/*                           <button 
-                            onClick={() => handleDescargarPDF(presupuesto)}
-                            title="Descargar PDF"
-                            className="text-primary hover:text-primary-light"
-                          >
-                            <Download size={18} />
-                          </button> */}
-
                           <button
+                            onClick={() => handleDescargarPDF(presupuesto)}
+                            disabled={descargandoId === presupuesto.id}
                             title="Descargar PDF"
-                            className="text-primary hover:text-primary-light"
+                            className="text-primary hover:text-primary-light disabled:opacity-50"
                           >
-                            <PDFDownloadLink
-                              document={<PresupuestoPDF presupuesto={presupuesto} />}
-                              fileName={`${presupuesto.numero}.pdf`}
-                              className="text-primary hover:text-primary-light"
-                            >
-                              {({ blob, url, loading, error }) =>
-                                <Download size={18} className={loading ? "animate-pulse" : ""} />
-                              }
-                            </PDFDownloadLink>
+                            <Download size={18} className={descargandoId === presupuesto.id ? "animate-pulse" : ""} />
                           </button>
 
                           <Link
