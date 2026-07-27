@@ -221,6 +221,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
     borderRadius: 5,
   },
+  photosGrid: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 10,
+  },
+  photo: {
+    width: 420,
+    borderRadius: 4,
+  },
   footer: {
     position: 'absolute',
     bottom: 30,
@@ -412,6 +421,18 @@ const PresupuestoPDF = ({ presupuesto }) => {
             ))}
 
             {totalesBlock}
+          </View>
+        )}
+
+        {/* Fotos */}
+        {presupuesto.imagenes && presupuesto.imagenes.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Fotos</Text>
+            <View style={styles.photosGrid}>
+              {presupuesto.imagenes.map((img) => (
+                <Image key={img.publicId} src={img.url} style={styles.photo} />
+              ))}
+            </View>
           </View>
         )}
 

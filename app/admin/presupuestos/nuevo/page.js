@@ -11,6 +11,7 @@ import { auth } from '../../../lib/firebase';
 import { crearPresupuesto } from '../../../lib/firestore';
 import { pdf } from '@react-pdf/renderer';
 import PresupuestoPDF from '../../../components/pdf/PresupuestoPDF';
+import ImageUploader from '../../../components/ImageUploader';
 
 // Función para formatear montos con separador de miles (punto) y decimal (coma)
 const formatMoney = (amount) => {
@@ -63,6 +64,7 @@ export default function NuevoPresupuesto() {
         descripcionGlobal: '',
         montoGlobal: 0,
         notas: '',
+        imagenes: [],
         subtotal: 0,
         // Nuevos campos para descuentos
         tipoDescuento: 'ninguno', // 'ninguno', 'porcentaje', 'monto'
@@ -284,6 +286,7 @@ export default function NuevoPresupuesto() {
                 descripcionGlobal: presupuesto.descripcionGlobal,
                 montoGlobal: presupuesto.montoGlobal,
                 notas: presupuesto.notas,
+                imagenes: presupuesto.imagenes,
                 subtotal: presupuesto.subtotal,
                 tipoDescuento: presupuesto.tipoDescuento,
                 valorDescuento: presupuesto.valorDescuento,
@@ -730,6 +733,20 @@ export default function NuevoPresupuesto() {
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Fotos */}
+                    <div className="p-6 bg-white rounded-lg shadow-md">
+                        <h3 className="mb-4 text-lg font-semibold text-gray-700">Fotos</h3>
+                        <ImageUploader
+                            imagenes={presupuesto.imagenes}
+                            onChange={(update) =>
+                                setPresupuesto((prev) => ({
+                                    ...prev,
+                                    imagenes: typeof update === 'function' ? update(prev.imagenes) : update,
+                                }))
+                            }
+                        />
                     </div>
 
                     {/* Notas adicionales */}

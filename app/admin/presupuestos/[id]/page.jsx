@@ -382,6 +382,24 @@ export default function VerPresupuesto({ params }) {
             </div>
           </div>
 
+          {/* Fotos */}
+          {presupuesto.imagenes && presupuesto.imagenes.length > 0 && (
+            <div className="px-8 py-4">
+              <h3 className="p-2 mb-3 text-sm font-bold text-blue-800 bg-gray-100 rounded">Fotos</h3>
+              <div className="flex flex-wrap gap-3">
+                {presupuesto.imagenes.map((img) => (
+                  <a key={img.publicId} href={img.url} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={img.url}
+                      alt=""
+                      className="object-cover w-24 h-24 border border-gray-300 rounded-md hover:opacity-80"
+                    />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Notas */}
           <div className="px-8 py-4">
             <h3 className="p-2 mb-3 text-sm font-bold text-blue-800 bg-gray-100 rounded">Notas y Condiciones</h3>
